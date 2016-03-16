@@ -1,8 +1,10 @@
 # ___Change Log (from previous)___
 # Comments and readability added where necessary as part of debug
 
-import itertools, random
-import config *
+import itertools
+import sys
+import random
+from config import *
 
 if __name__ == '__main__':
     
@@ -15,9 +17,8 @@ if __name__ == '__main__':
     
     # Move cards from central deck 
     # to active central deck
-    max = central['activesize']
     count = 0
-    while count < max:
+    while count < central['activesize']:
         card = central['deck'].pop()
         central['active'].append(card)
         count = count + 1
@@ -52,14 +53,15 @@ if __name__ == '__main__':
         print central['supplement'][0]
     
     # Starting the game
-    pG = raw_input('Do you want to play a game?:')
-    cG = (pG=='Y')
-    oT = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent")
-    aggressive = (oT=='A')
+    iplay_game = raw_input("Do you want to play a game?").upper()
+    continue_game = (iplay_game=='Y')
+    iopponent_type = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent").upper()
+    print iopponent_type, iplay_game
+    aggressive = (iopponent_type=='A')
     
     # Each loop is a new round in the game
     # User goes first followed by PC
-    while cG:
+    while continue_game:
         # iterators to count money
         # and attack in players' hands
         money = 0
@@ -78,16 +80,11 @@ if __name__ == '__main__':
                     print "[%s] %s" % (index, card)
                     index = index + 1
             
-            # Display User values
-            print "\nYour Values"
-            print "Money %s, Attack %s" % (money, attack)
-            
             # In-game actions UI
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
-            act = raw_input("Enter Action: ")
-            print act
+            iuser_action = raw_input("Enter Action: ").upper()
             
-            if act == 'P':      # Play all cards
+            if iuser_action == 'P':      # Play all cards
                 if(len(pO['hand'])>0):  # Are there cards in the hand
                 
                     # transfer all cards from hand to active
@@ -114,16 +111,16 @@ if __name__ == '__main__':
                 print "\nYour Values"
                 print "Money %s, Attack %s" % (money, attack)
                 
-            if act.isdigit():   # Play a specific card
+            if iuser_action.isdigit():   # Play a specific card
                 if( int(act) < len(pO['hand'])):
                     
                     # Transfer card to active
-                    pO['active'].append(pO['hand'].pop(int(act)))
+                    # add values in hand to current totals
+                    card = pO['hand'].pop(int(act))
+                    pO['active'].append(card)
+                    money = money + card.get_money()
+                    attack = attack + card.get_attack()
                     
-                    # Iteratively add up all card values in active
-                    for card in pO['active']:
-                        money = money + card.get_money()
-                        attack = attack + card.get_attack()
                 
                 # Display User hand
                 print "\nYour Hand"
@@ -141,7 +138,7 @@ if __name__ == '__main__':
                 print "\nYour Values"
                 print "Money %s, Attack %s" % (money, attack)
             
-            if (act == 'B'):    # Buy cards
+            if (iuser_action == 'B'):    # Buy cards
                 
                 # Check player has money available
                 while money > 0: # no warning of no money
@@ -155,10 +152,10 @@ if __name__ == '__main__':
                     
                     # User chooses a card to purchase
                     print "Choose a card to buy [0-n], S for supplement, E to end buying"
-                    bv = raw_input("Choose option: ")
+                    ibuy_input = raw_input("Choose option: ").upper()
                     
                     # Evaluate choice
-                    if bv == 'S': # Buy a supplement
+                    if ibuy_input == 'S': # Buy a supplement
                         if len(central['supplement']) > 0: # If supplements exist
                             
                             # Buy if player has enough money
@@ -172,15 +169,15 @@ if __name__ == '__main__':
                         else:
                             print "no supplements left"
                     
-                    elif bv == 'E': # User ends shopping spree
+                    elif ibuy_input == 'E': # User ends shopping spree
                         break
-                    elif bv.isdigit(): # Buy a card
-                        if int(bv) < len(central['active']): # If card exists
+                    elif ibuy_input.isdigit(): # Buy a card
+                        if int(ibuy_input) < len(central['active']): # If card exists
                              # Buy if User has enough money
                              # Move directly to discard pile
-                             if money >= central['active'][int(bv)].cost:
-                                money = money - central['active'][int(bv)].cost
-                                pO['discard'].append(central['active'].pop(int(bv)))
+                             if money >= central['active'][int(ibuy_input)].cost:
+                                money = money - central['active'][int(ibuy_input)].cost
+                                pO['discard'].append(central['active'].pop(int(ibuy_input)))
                                 
                                 # Refill active from central deck
                                 # if there are cards in central
@@ -200,10 +197,10 @@ if __name__ == '__main__':
                         print "Enter a valid option"
             
             
-            if act == 'A':      # Attack
+            if iuser_action == 'A':      # Attack
                 pC['health'] -= attack
                 attack = 0
-            if act == 'E':      # Ends turn
+            if iuser_action == 'E':      # Ends turn
                 
                 # If User has cards in the hand add to discard pile
                 if (len(pO['hand']) >0 ):
@@ -234,8 +231,6 @@ if __name__ == '__main__':
                     card = pO['deck'].pop()
                     pO['hand'].append(card)
                 break
-        
-            
         
         #### End User Turn ####
         
@@ -304,7 +299,7 @@ if __name__ == '__main__':
                         templist.append(("S", central['supplement'][0]))
                 
                 # Select cards where cost of card_i < money
-                for intindex in xrange (0, central['activesize']):  # Loop all cards
+                for intindex in xrange(0, central['activesize']):  # Loop all cards
                     if central['active'][intindex].cost <= money:   # if PC has enough money
                         # Add to temporary purchases
                         templist.append((intindex, central['active'][intindex]))
@@ -345,9 +340,8 @@ if __name__ == '__main__':
                     # if the active deck
                     source = templist[highestIndex][0]
                     
-                    # Check the card is in range [0,5]
-                    # This will fail if central['activesize'] != 5
-                    if source in xrange(0,5): # This is a card from the active deck
+                    # This is a card from the active deck
+                    if source in xrange(0,central['activesize']):
                         
                         # If PC has money to purchase:
                         # comparison has alrady been made
@@ -442,12 +436,12 @@ if __name__ == '__main__':
         
         
         # Check for end of game
-        # cG = False flags the end of a game
+        # continue_game = False flags the end of a game
         if pO['health'] <= 0:   # User has died
-            cG = False
+            continue_game = False
             print "Computer wins"
         elif pC['health'] <= 0: # PC has died
-            cG = False
+            continue_game = False
             print 'Player One Wins'
         
         # Game ends if size of active deck is zero
@@ -466,19 +460,19 @@ if __name__ == '__main__':
                     print "Computer Wins on Card Strength"
                 else:
                     print "Draw"
-            cG = False # End game flag set
+            continue_game = False # End game flag set
         
         # New game interface
-        if not cG:
-            pG = raw_input("\nDo you want to play another game?:")
-            cG = (pG=='Y')
+        if not continue_game:
+            iplay_game = raw_input("\nDo you want to play another game?").upper()
+            continue_game = (iplay_game=='Y')
             
             # Initiate new game sequence
-            if cG:
+            if continue_game:
                 
                 # Starting the game
-                oT = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent")
-                aggressive = (oT=='A')
+                iopponent_type = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent").upper()
+                aggressive = (iopponent_type=='A')
                 
                 # set new game global variables from config iterable
                 for item_name,item in config.newgame:
@@ -486,9 +480,11 @@ if __name__ == '__main__':
                 
                 # Move cards from central deck 
                 # to active central deck
-                for x in xrange(0, central['activesize']):
+                count = 0
+                while count < central['activesize']:
                     card = central['deck'].pop()
                     central['active'].append(card)
+                    count = count + 1
                 
                 # Move cards from User deck
                 # to User's hand
@@ -512,9 +508,8 @@ if __name__ == '__main__':
                 
                 # Display card central card state
                 print "Available Cards"
-                max = central['activesize']
                 count = 0
-                while count < max:
+                while count < central['activesize']:
                     print central['active'][count]
                     count = count + 1
                 
@@ -522,5 +517,5 @@ if __name__ == '__main__':
                 print "Supplement"
                 if len(central['supplement']) > 0:
                     print central['supplement'][0]
-        
-    exit() # Terminate
+    
+    sys.exit() # Terminate
