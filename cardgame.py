@@ -112,11 +112,11 @@ if __name__ == '__main__':
                 print "Money %s, Attack %s" % (money, attack)
                 
             if iuser_action.isdigit():   # Play a specific card
-                if( int(act) < len(pO['hand'])):
+                if( int(iuser_action) < len(pO['hand'])):
                     
                     # Transfer card to active
                     # add values in hand to current totals
-                    card = pO['hand'].pop(int(act))
+                    card = pO['hand'].pop(int(iuser_action))
                     pO['active'].append(card)
                     money = money + card.get_money()
                     attack = attack + card.get_attack()
@@ -145,10 +145,8 @@ if __name__ == '__main__':
                     
                     # Display central cards state
                     print "Available Cards"
-                    ind = 0
                     for card in central['active']:
-                        print "[%s] %s" % (ind,card)
-                        ind = ind + 1
+                        print card
                     
                     # User chooses a card to purchase
                     print "Choose a card to buy [0-n], S for supplement, E to end buying"
