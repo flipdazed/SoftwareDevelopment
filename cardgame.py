@@ -56,7 +56,6 @@ if __name__ == '__main__':
     iplay_game = raw_input("Do you want to play a game?").upper()
     continue_game = (iplay_game=='Y')
     iopponent_type = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent").upper()
-    print iopponent_type, iplay_game
     aggressive = (iopponent_type=='A')
     
     # Each loop is a new round in the game
@@ -82,8 +81,7 @@ if __name__ == '__main__':
             
             # In-game actions UI
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
-            # iuser_action = raw_input("Enter Action: ").upper()
-            iuser_action = 'E'
+            iuser_action = raw_input("Enter Action: ").upper()
             if iuser_action == 'P':      # Play all cards
                 if(len(pO['hand'])>0):  # Are there cards in the hand
                 
@@ -496,7 +494,7 @@ if __name__ == '__main__':
                 
                 # Move cards from PC deck
                 # to PC's hand
-                for i,x in enumerate(xrange(0, pO['handsize'])):
+                for x in xrange(0, pO['handsize']):
                     if len(pC['deck']) == 0:
                         random.shuffle(pO['discard'])
                         pC['deck'] = pC['discard']
