@@ -17,7 +17,7 @@ class Card(object):
     
     def get_money(self):
         return self.values[1]
-        
+    
 class GetConfig(object):
     """Stores configuration paramters"""
     def __init__(self):
@@ -25,13 +25,9 @@ class GetConfig(object):
         Creates a static attribute to create
         global variables.
         """
-        # stores an iteritem for each containing
-        # all the paramters we require
-        self.newgame = self.__create_newgame()
-        self.initial = self.__create_initial()
         pass
     
-    def __create_initial(self):
+    def initial(self):
         """
         Creates an dict.iteritem() of all initial game 
         parameters.
@@ -126,10 +122,10 @@ class GetConfig(object):
         central['supplement'] = supplement
         central['active'] = []
         
-        items = locals().iteritems()
-        return items
+        items = locals()
+        return items.iteritems()
     
-    def __create_newgame(self):
+    def newgame(self):
         """
         Creates an dict.iteritem() of all initial game 
         parameters.
@@ -224,5 +220,5 @@ class GetConfig(object):
         central['supplement'] = supplement
         central['active'] = []
         
-        items = locals().iteritems()
-        return items
+        items = locals()
+        return items.iteritems()

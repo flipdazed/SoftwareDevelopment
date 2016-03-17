@@ -1,10 +1,10 @@
 # ___Change Log (from previous)___
 # Comments and readability added where necessary as part of debug
 
-import itertools
 import sys
 import random
 from config import *
+
 
 if __name__ == '__main__':
     
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     config = GetConfig()
     
     # set initial global variables from config iterable
-    for item_name,item in config.initial:
+    for item_name,item in config.initial():
         globals()[item_name] = item
     
     # Move cards from central deck 
@@ -82,8 +82,8 @@ if __name__ == '__main__':
             
             # In-game actions UI
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
-            iuser_action = raw_input("Enter Action: ").upper()
-            
+            # iuser_action = raw_input("Enter Action: ").upper()
+            iuser_action = 'E'
             if iuser_action == 'P':      # Play all cards
                 if(len(pO['hand'])>0):  # Are there cards in the hand
                 
@@ -473,7 +473,7 @@ if __name__ == '__main__':
                 aggressive = (iopponent_type=='A')
                 
                 # set new game global variables from config iterable
-                for item_name,item in config.newgame:
+                for item_name,item in config.newgame():
                     globals()[item_name] = item
                 
                 # Move cards from central deck 
@@ -496,7 +496,7 @@ if __name__ == '__main__':
                 
                 # Move cards from PC deck
                 # to PC's hand
-                for x in xrange(0, pO['handsize']):
+                for i,x in enumerate(xrange(0, pO['handsize'])):
                     if len(pC['deck']) == 0:
                         random.shuffle(pO['discard'])
                         pC['deck'] = pC['discard']
