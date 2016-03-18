@@ -1,9 +1,9 @@
 # This is a python testing file
-from config import *
+from engine import *
 import itertools, random
 import collections
 import logging
-logging.basicConfig(level=logging.INFO)
+loglevel=logging.DEBUG
 
 def flatten(l):
     """This flattens arbitrarily annoying lists / dicts"""
@@ -21,6 +21,7 @@ class Settings(object):
         
         # creates a logger for the test file
         self.logger = logging.getLogger(__name__+".Settings")
+        self.logger.setLevel(loglevel)
         self.logger.info('Logger started.')
         
         # create classes of users and central deck

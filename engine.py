@@ -2,7 +2,7 @@
 import itertools, random
 from functools import wraps
 import logging
-logging.basicConfig(level=logging.INFO)
+loglevel=logging.DEBUG
 
 # http://stackoverflow.com/a/6307868/4013571
 def wrap_all(decorator):
@@ -74,13 +74,6 @@ class CommonActions(object):
                 player['discard'] = []              # empty the discard pile
             card = player['deck'].pop()
             player['hand'].append(card)
-        pass
-    
-    def show_health(self):
-        """Shows players' health"""
-        # creates an attribute based on the class
-        player = getattr(self, self.whoami)
-        print "{} Health {}".format(player['name'],player['health'])
         pass
     
     def print_active_cards(self):
@@ -157,7 +150,12 @@ class CommonUserActions(object):
         print " {} values attack {}, money {}".format(
             player['name'],self.attack, self.money)
         pass
-        
+    def show_health(self):
+        """Shows players' health"""
+        # creates an attribute based on the class
+        player = getattr(self, self.whoami)
+        print "{} Health {}".format(player['name'],player['health'])
+        pass 
 # separates classes in my editor
 @wrap_all(log_me)
 class Central(CommonActions):
@@ -168,6 +166,7 @@ class Central(CommonActions):
         
         # logging
         self.logger = logging.getLogger(__name__ + ".Central")
+        self.logger.setLevel(loglevel)
         self.logger.debug("Central Created.")
         
         # my name
@@ -277,6 +276,7 @@ class User(CommonActions, CommonUserActions):
         
         # logging
         self.logger = logging.getLogger(__name__ + ".User")
+        self.logger.setLevel(loglevel)
         self.logger.debug("User Created.")
         
         # my name
@@ -362,6 +362,7 @@ class Computer(CommonActions, CommonUserActions):
         
         # logging
         self.logger = logging.getLogger(__name__ + ".Computer")
+        self.logger.setLevel(loglevel)
         self.logger.debug("Computer Created.")
         
         # my name
