@@ -4,7 +4,6 @@ from functools import wraps
 import logging
 logging.basicConfig(level=logging.INFO)
 
-
 # http://stackoverflow.com/a/6307868/4013571
 def wrap_all(decorator):
     """wraps all function with the wrapper provided as an argument"""
@@ -25,11 +24,27 @@ def log_me(func):
         return func(*args, **kwargs)
     return tmp
 
-@wrap_all(log_me)
-class Common(object):
-    def __init__(self):
-        # creates an attribute based on the class
+class Card(object):
+    """Creates the card objects used in game"""
+    
+    def __init__(self, name, values=(0, 0), cost=1):
+        self.name = name
+        self.cost = cost
+        self.values = values
         
+    def __str__(self):
+        return 'Name %s costing %s with attack %s and money %s' \
+            % (self.name, self.cost, self.values[0], self.values[1])
+    
+    def get_attack(self):
+        return self.values[0]
+    
+    def get_money(self):
+        return self.values[1]
+
+@wrap_all(log_me)
+class CommonActions(object):
+    def __init__(self):
         pass
     
     def deck_to_hand(self):
@@ -79,26 +94,73 @@ class Common(object):
             print card
         pass
 
-class Card(object):
-    """Creates the card objects used in game"""
-    
-    def __init__(self, name, values=(0, 0), cost=1):
-        self.name = name
-        self.cost = cost
-        self.values = values
+@wrap_all(log_me)
+class CommonUserActions(object):
+    def __init__(self):
+        pass
+    def play_all_cards(self):
+        """transfer all cards from hand to active
+            add values in hand to current totals
         
-    def __str__(self):
-        return 'Name %s costing %s with attack %s and money %s' \
-            % (self.name, self.cost, self.values[0], self.values[1])
+            should only be used by User and Computer
+        """
+        player = getattr(self, self.whoami)
+        for x in xrange(0, len(player['hand'])):
+            card = player['hand'].pop()
+            player['active'].append(card)
+            self.money = self.money + card.get_money()
+            self.attack = self.attack + card.get_attack()
+        pass
     
-    def get_attack(self):
-        return self.values[0]
+    def play_a_card(self, card_number):
+        """plays a specific card...
+        
+        Transfer card to active
+        add values in hand to current totals
+        """
+        player = getattr(self, self.whoami)
+        
+        card_number = int(card_number)
+        # Transfer card to active
+        # add values in hand to current totals
+        card = player['hand'].pop(card_number)
+        player['active'].append(card)
+        self.money = self.money + card.get_money()
+        self.attack = self.attack + card.get_attack()
+        pass
     
-    def get_money(self):
-        return self.values[1]
+    def discard_hand(self):
+        """If there are cards in the hand add to discard pile"""
+        
+        player = getattr(self, self.whoami)
+        
+        if (len(player['hand']) > 0 ):
+            # Iterate through all cards in player hand
+            for x in xrange(0, len(player['hand'])):
+                player['discard'].append(player['hand'].pop())
+        pass
+    
+    def discard_active_cards(self):
+        """If there cards in PC active deck
+        then move all cards from active to discard"""
+        
+        player = getattr(self, self.whoami)
+        
+        if (len(player['active']) > 0 ):
+            for x in xrange(0, len(player['active'])):
+                player['discard'].append(player['active'].pop())
+        pass
+    def display_values(self):
+        """ Display player values"""
+        
+        player = getattr(self, self.whoami)
+        print " {} values attack {}, money {}".format(
+            player['name'],self.attack, self.money)
+        pass
+        
 # separates classes in my editor
 @wrap_all(log_me)
-class Central(Common):
+class Central(CommonActions):
     """The Central Deck Class"""
     
     def __init__(self):
@@ -207,7 +269,7 @@ class Central(Common):
         pass
 # separates classes in my editor
 @wrap_all(log_me)
-class User(Common):
+class User(CommonActions, CommonUserActions):
     """The User Class"""
     
     def __init__(self):
@@ -292,7 +354,7 @@ class User(Common):
         pass
 # separates classes in my editor
 @wrap_all(log_me)
-class Computer(Common):
+class Computer(CommonActions, CommonUserActions):
     """The Computer Player Class"""
     
     def __init__(self):
@@ -334,7 +396,6 @@ class Computer(Common):
         self.pC['active'] = []
         pass
     
-    
     def replay(self):
         """creates parameters for newgame"""
         
@@ -361,3 +422,4 @@ class Computer(Common):
         self.pC['hand'] = []
         self.pC['discard'] = []
         self.pC['active'] = []
+        pass

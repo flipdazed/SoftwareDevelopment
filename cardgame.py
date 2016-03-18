@@ -3,7 +3,7 @@
 
 import sys
 import random
-from config import *
+from engine import *
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -47,15 +47,15 @@ if __name__ == '__main__':
         # logging
         logger.debug("Start User Turn...")
         
-        # iterators to count money
+        # iterators to count user.money
         # and attack in players' hands
-        money = 0
-        attack = 0
+        user.money = 0
+        user.attack = 0
         
         while True: # User's Turn
             
             # Display health state
-            print ""
+            print "" # Temporary until UI Fix
             user.show_health()
             computer.show_health()
             
@@ -66,15 +66,11 @@ if __name__ == '__main__':
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
             iuser_action = raw_input("Enter Action: ").upper()
             if iuser_action == 'P':      # Play all cards
-                if(len(user.pO['hand'])>0):  # Are there cards in the hand
                 
+                if(len(user.pO['hand'])>0):  # Are there cards in the hand
                     # transfer all cards from hand to active
                     # add values in hand to current totals
-                    for x in xrange(0, len(user.pO['hand'])):
-                        card = user.pO['hand'].pop()
-                        user.pO['active'].append(card)
-                        money = money + card.get_money()
-                        attack = attack + card.get_attack()
+                    user.play_all_cards()
                 
                 # Display User hand
                 user.print_hand()
@@ -82,20 +78,12 @@ if __name__ == '__main__':
                 # Display User active cards
                 user.print_active_cards()
                 
-                # Display User values
-                print "\nYour Values"
-                print "Money %s, Attack %s" % (money, attack)
+                # Display PC state
+                user.display_values()
                 
             if iuser_action.isdigit():   # Play a specific card
                 if( int(iuser_action) < len(user.pO['hand'])):
-                    
-                    # Transfer card to active
-                    # add values in hand to current totals
-                    card = user.pO['hand'].pop(int(iuser_action))
-                    user.pO['active'].append(card)
-                    money = money + card.get_money()
-                    attack = attack + card.get_attack()
-                    
+                    user.play_a_card(card_number=iuser_action)
                 
                 # Display User hand
                 user.print_hand()
@@ -103,14 +91,13 @@ if __name__ == '__main__':
                 # Display User active cards
                 user.print_active_cards()
                 
-                # Display User values
-                print "\nYour Values"
-                print "Money %s, Attack %s" % (money, attack)
+                # Display PC state
+                user.display_values()
             
             if (iuser_action == 'B'):    # Buy cards
                 
-                # Check player has money available
-                while money > 0: # no warning of no money
+                # Check player has user.money available
+                while user.money > 0: # no warning of no user.money
                     
                     # Display engine.central cards state
                     engine.print_active_cards()
@@ -123,10 +110,10 @@ if __name__ == '__main__':
                     if ibuy_input == 'S': # Buy a supplement
                         if len(engine.central['supplement']) > 0: # If supplements exist
                             
-                            # Buy if player has enough money
+                            # Buy if player has enough user.money
                             # Move to player's discard pile
-                            if money >= engine.central['supplement'][0].cost:
-                                money = money - engine.central['supplement'][0].cost
+                            if user.money >= engine.central['supplement'][0].cost:
+                                user.money = user.money - engine.central['supplement'][0].cost
                                 user.pO['discard'].append(engine.central['supplement'].pop())
                                 print "Supplement Bought"
                             else:
@@ -138,10 +125,10 @@ if __name__ == '__main__':
                         break
                     elif ibuy_input.isdigit(): # Buy a card
                         if int(ibuy_input) < len(engine.central['active']): # If card exists
-                             # Buy if User has enough money
+                             # Buy if User has enough user.money
                              # Move directly to discard pile
-                             if money >= engine.central['active'][int(ibuy_input)].cost:
-                                money = money - engine.central['active'][int(ibuy_input)].cost
+                             if user.money >= engine.central['active'][int(ibuy_input)].cost:
+                                user.money = user.money - engine.central['active'][int(ibuy_input)].cost
                                 user.pO['discard'].append(engine.central['active'].pop(int(ibuy_input)))
                                 
                                 # Refill active from engine.central deck
@@ -163,27 +150,24 @@ if __name__ == '__main__':
             
             
             if iuser_action == 'A':      # Attack
-                computer.pC['health'] -= attack
-                attack = 0
+                computer.pC['health'] -= user.attack
+                user.attack = 0
+            
             if iuser_action == 'E':      # Ends turn
                 
                 # If User has cards in the hand add to discard pile
-                if (len(user.pO['hand']) >0 ):
-                    for x in xrange(0, len(user.pO['hand'])):
-                        user.pO['discard'].append(user.pO['hand'].pop())
+                user.discard_hand()
                 
                 # If there cards in User active deck
                 # then move all cards from active to discard
-                if (len(user.pO['active']) >0 ):
-                    for x in xrange(0, len(user.pO['active'])):
-                        user.pO['discard'].append(user.pO['active'].pop())
+                user.discard_active_cards()
                 
                 # Move cards from User deck to User's hand
                 user.deck_to_hand()
                 break
         
         #### End User Turn ####
-
+        
         # logging
         logger.debug("End User Turn.")
         
@@ -205,23 +189,20 @@ if __name__ == '__main__':
         
         # Iterators to count money
         # and attack in User's hands
-        money = 0
-        attack = 0
+        computer.money = 0
+        computer.attack = 0
         
-        # Sum up money and attack in PC hand
-        for x in xrange(0, len(computer.pC['hand'])):
-            card = computer.pC['hand'].pop()
-            computer.pC['active'].append(card)
-            money = money + card.get_money()
-            attack = attack + card.get_attack()
+        # transfer all cards from hand to active
+        # add values in hand to current totals
+        computer.play_all_cards()
         
         # Display PC state
-        print " Computer player values attack %s, money %s" % (attack, money)
+        computer.display_values()
         
         # PC starts by attacking User
-        print " Computer attacking with strength %s" % attack
-        user.pO['health'] -= attack
-        attack = 0
+        print " Computer attacking with strength %s" % computer.attack
+        user.pO['health'] -= computer.attack
+        computer.attack = 0
         
         # Display health state
         print ""
@@ -229,15 +210,15 @@ if __name__ == '__main__':
         computer.show_health()
         
         # Display PC state
-        print "Computer player values attack %s, money %s" % (attack, money)
+        computer.display_values()
         
         print "Computer buying"
         # This loop should never run more than once
         # due to the conditions in the inner cb loop
-        if money > 0:   # Commence buying if PC has money 
+        if computer.money > 0:   # Commence buying if PC has money 
             cb = True
             templist = []
-            print "Starting Money %s and cb %s " % (money, cb)
+            print "Starting Money %s and cb %s " % (computer.money, cb)
             # Loop while cb, conditions:
             # len(templist) > 0 and money != 0
             while cb:
@@ -245,15 +226,15 @@ if __name__ == '__main__':
                 # cards in the buying process
                 templist = [] # This will be a list of tuples
                 
-                # Select Supplements if cost < money
+                # Select Supplements if cost < computer.money
                 if len(engine.central['supplement']) > 0:                  # If there are any supplements
-                    if engine.central['supplement'][0].cost <= money:      # If PC has enough money
+                    if engine.central['supplement'][0].cost <= computer.money:      # If PC has enough money
                         # Add to temporary purchases
                         templist.append(("S", engine.central['supplement'][0]))
                 
                 # Select cards where cost of card_i < money
                 for intindex in xrange(0, engine.central['activesize']):  # Loop all cards
-                    if engine.central['active'][intindex].cost <= money:   # if PC has enough money
+                    if engine.central['active'][intindex].cost <= computer.money:   # if PC has enough money
                         # Add to temporary purchases
                         templist.append((intindex, engine.central['active'][intindex]))
                 
@@ -263,7 +244,7 @@ if __name__ == '__main__':
                     
                     # Loop through the temp list by index
                     # Identifies the highest value item in the list
-                    # Prioritises on attack (aggressive) or money (greedy)
+                    # Prioritises on attack (aggressive) or computer.money (greedy)
                     # if equal values
                     for intindex in xrange(0,len(templist)):
                         
@@ -298,10 +279,10 @@ if __name__ == '__main__':
                         
                         # If PC has money to purchase:
                         # comparison has alrady been made
-                        if money >= engine.central['active'][int(source)].cost:
+                        if computer.money >= engine.central['active'][int(source)].cost:
                             
                             # Add card to PC discard pile
-                            money = money - engine.central['active'][int(source)].cost
+                            computer.money = computer.money - engine.central['active'][int(source)].cost
                             card = engine.central['active'].pop(int(source))
                             print "Card bought %s" % card
                             computer.pC['discard'].append(card)
@@ -321,8 +302,8 @@ if __name__ == '__main__':
                     else: # This is a supplement as it is not in the range [0,5]
                         # If PC has money to purchase:
                         # comparison has alrady been made
-                        if money >= engine.central['supplement'][0].cost:
-                            money = money - engine.central['supplement'][0].cost
+                        if computer.money >= engine.central['supplement'][0].cost:
+                            computer.money = computer.money - engine.central['supplement'][0].cost
                             card = engine.central['supplement'].pop()
                             computer.pC['discard'].append(card)
                             print "Supplement Bought %s" % card
@@ -332,26 +313,21 @@ if __name__ == '__main__':
                     # ^Loop: Buy another card
                 else:           # Exit loop if PC couldn't buy any cards
                     cb = False
-                if money == 0:  # Exit loop if no money
+                if computer.money == 0:  # Exit loop if no money
                     # This is a subcomparison that of the above
                     # This will just exit the loop 1 cycle earlier
                     cb = False
         else:           # Don't buy if no money
             print "No Money to buy anything"
         
-        # If PC has cards in the hand add to discard pile
-        if (len(computer.pC['hand']) > 0 ):
-            # Iterate through all cards in PC hand
-            for x in xrange(0, len(computer.pC['hand'])):
-                computer.pC['discard'].append(computer.pC['hand'].pop())
+        # If player has cards in the hand add to discard pile
+        computer.discard_hand()
         
         # If there cards in PC active deck
         # then move all cards from active to discard
         # currently this will alwayds be true as PC
         # plays all by default.
-        if (len(computer.pC['active']) > 0 ):
-            for x in xrange(0, len(computer.pC['active'])):
-                computer.pC['discard'].append(computer.pC['active'].pop())
+        computer.discard_active_cards()
         
         # Move cards from PC deck to PC hand
         computer.deck_to_hand()
@@ -375,6 +351,8 @@ if __name__ == '__main__':
         
         
         # Check for end of game
+        # logging
+        logger.debug("Checking End Game Conditions...")
         # continue_game = False flags the end of a game
         if user.pO['health'] <= 0:   # User has died
             continue_game = False
@@ -406,6 +384,7 @@ if __name__ == '__main__':
             iplay_game = raw_input("\nDo you want to play another game?").upper()
             continue_game = (iplay_game=='Y')
             
+            logger.debug("Starting Replay...")
             # Initiate new game sequence
             if continue_game:
                 
@@ -420,11 +399,7 @@ if __name__ == '__main__':
                 
                 # Move cards from engine.central deck 
                 # to active engine.central deck
-                count = 0
-                while count < engine.central['activesize']:
-                    card = engine.central['deck'].pop()
-                    engine.central['active'].append(card)
-                    count = count + 1
+                engine.deck_to_active()
                 
                 # Move cards from User deck to User's hand
                 user.deck_to_hand()
@@ -433,7 +408,7 @@ if __name__ == '__main__':
                 computer.deck_to_hand()
                 
                 # Display engine.central cards state
-                engine.print_active_cards_hand()
+                engine.print_active_cards()
                 engine.print_supplements()
     
     sys.exit() # Terminate
