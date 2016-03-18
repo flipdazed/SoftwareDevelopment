@@ -4,9 +4,14 @@
 import sys
 import random
 from config import *
-
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
+    
+    # logging
+    logger.debug("Starting Game...")
     
     # instanciate the game settings
     user = User()
@@ -15,40 +20,17 @@ if __name__ == '__main__':
     
     # Move cards from engine.central deck 
     # to active engine.central deck
-    count = 0
-    while count < engine.central['activesize']:
-        card = engine.central['deck'].pop()
-        engine.central['active'].append(card)
-        count = count + 1
+    engine.deck_to_active()
     
-    # Move cards from User deck
-    # to User's hand
-    for x in xrange(0, user.pO['handsize']):
-        if (len(user.pO['deck']) == 0):
-            random.shuffle(user.pO['discard'])
-            user.pO['deck'] = user.pO['discard']
-            user.pO['discard'] = []
-        card = user.pO['deck'].pop()
-        user.pO['hand'].append(card)
+    # Move cards from User deck to User's hand
+    user.deck_to_hand()
     
-    # Move cards from PC deck
-    # to PC's hand
-    for x in xrange(0, user.pO['handsize']):
-        if len(computer.pC['deck']) == 0:
-            random.shuffle(user.pO['discard'])
-            computer.pC['deck'] = computer.pC['discard']
-            computer.pC['discard'] = []
-        card = computer.pC['deck'].pop()
-        computer.pC['hand'].append(card)
+    # Move cards from PC deck to PC's hand
+    computer.deck_to_hand()
     
     # Display engine.central cards state
-    print "Available Cards"
-    for card in engine.central['active']:
-        print card
-    
-    print "Supplement"
-    if len(engine.central['supplement']) > 0:
-        print engine.central['supplement'][0]
+    engine.print_active_cards()
+    engine.print_supplements()
     
     # Starting the game
     iplay_game = raw_input("Do you want to play a game?").upper()
@@ -59,6 +41,12 @@ if __name__ == '__main__':
     # Each loop is a new round in the game
     # User goes first followed by PC
     while continue_game:
+        # logging
+        logger.debug("Starting New Round.")
+        
+        # logging
+        logger.debug("Start User Turn...")
+        
         # iterators to count money
         # and attack in players' hands
         money = 0
@@ -67,15 +55,12 @@ if __name__ == '__main__':
         while True: # User's Turn
             
             # Display health state
-            print "\nPlayer Health %s" % user.pO['health']
-            print "Computer Health %s" % computer.pC['health']
+            print ""
+            user.show_health()
+            computer.show_health()
             
             # Display User hand
-            print "\nYour Hand"
-            index = 0
-            for card in user.pO['hand']:
-                    print "[%s] %s" % (index, card)
-                    index = index + 1
+            user.print_hand()
             
             # In-game actions UI
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
@@ -92,16 +77,10 @@ if __name__ == '__main__':
                         attack = attack + card.get_attack()
                 
                 # Display User hand
-                print "\nYour Hand"
-                index = 0
-                for card in user.pO['hand']:
-                    print "[%s] %s" % (index, card)
-                    index = index + 1
+                user.print_hand()
                 
                 # Display User active cards
-                print "\nYour Active Cards"
-                for card in user.pO['active']:
-                    print card
+                user.print_active_cards()
                 
                 # Display User values
                 print "\nYour Values"
@@ -119,16 +98,10 @@ if __name__ == '__main__':
                     
                 
                 # Display User hand
-                print "\nYour Hand"
-                index = 0
-                for card in user.pO['hand']:
-                    print "[%s] %s" % (index, card)
-                    index = index + 1
+                user.print_hand()
                 
                 # Display User active cards
-                print "\nYour Active Cards"
-                for card in user.pO['active']:
-                    print card
+                user.print_active_cards()
                 
                 # Display User values
                 print "\nYour Values"
@@ -140,9 +113,7 @@ if __name__ == '__main__':
                 while money > 0: # no warning of no money
                     
                     # Display engine.central cards state
-                    print "Available Cards"
-                    for card in engine.central['active']:
-                        print card
+                    engine.print_active_cards()
                     
                     # User chooses a card to purchase
                     print "Choose a card to buy [0-n], S for supplement, E to end buying"
@@ -207,43 +178,30 @@ if __name__ == '__main__':
                     for x in xrange(0, len(user.pO['active'])):
                         user.pO['discard'].append(user.pO['active'].pop())
                 
-                # For each index in player hand
-                # Refills User hand from User deck.
-                # If deck is empty, discard pile is shuffled
-                # and becomes deck
-                for x in xrange(0, user.pO['handsize']):
-                    if len(user.pO['deck']) == 0:
-                        
-                        # Shuffle deck User['handsize'] times
-                        # if length of User deck = 0
-                        # Will only be done once
-                        random.shuffle(user.pO['discard'])   # Shuffle discard pile
-                        user.pO['deck'] = user.pO['discard']      # Make deck the discard pile
-                        user.pO['discard'] = []              # empty the discard pile
-                        
-                    # Refill User hand from deck by 1 card
-                    card = user.pO['deck'].pop()
-                    user.pO['hand'].append(card)
+                # Move cards from User deck to User's hand
+                user.deck_to_hand()
                 break
         
         #### End User Turn ####
+
+        # logging
+        logger.debug("End User Turn.")
         
         # Display engine.central cards state
-        print "Available Cards"
-        for card in engine.central['active']:
-            print card
+        engine.print_active_cards()
         
         # Display supplements
-        print "Supplement"
-        if len(engine.central['supplement']) > 0:
-            print engine.central['supplement'][0]
+        engine.print_supplements()
         
         # Display health state
-        print "\nPlayer Health %s" % user.pO['health']
-        print "Computer Health %s" % computer.pC['health']
+        print ""
+        user.show_health()
+        computer.show_health()
         
         
         #### Start PC Turn ####
+        # logging
+        logger.debug("Starting Computer Turn...")
         
         # Iterators to count money
         # and attack in User's hands
@@ -252,10 +210,10 @@ if __name__ == '__main__':
         
         # Sum up money and attack in PC hand
         for x in xrange(0, len(computer.pC['hand'])):
-                        card = computer.pC['hand'].pop()
-                        computer.pC['active'].append(card)
-                        money = money + card.get_money()
-                        attack = attack + card.get_attack()
+            card = computer.pC['hand'].pop()
+            computer.pC['active'].append(card)
+            money = money + card.get_money()
+            attack = attack + card.get_attack()
         
         # Display PC state
         print " Computer player values attack %s, money %s" % (attack, money)
@@ -266,11 +224,12 @@ if __name__ == '__main__':
         attack = 0
         
         # Display health state
-        print "\nPlayer Health %s" % user.pO['health']
-        print "Computer Health %s" % computer.pC['health']
+        print ""
+        user.show_health()
+        computer.show_health()
         
         # Display PC state
-        print " Computer player values attack %s, money %s" % (attack, money)
+        print "Computer player values attack %s, money %s" % (attack, money)
         
         print "Computer buying"
         # This loop should never run more than once
@@ -394,39 +353,25 @@ if __name__ == '__main__':
             for x in xrange(0, len(computer.pC['active'])):
                 computer.pC['discard'].append(computer.pC['active'].pop())
         
-        # For each index in player hand
-        # Refills PC hand from PC deck.
-        # If deck is empty, discard pile is shuffled
-        # and becomes deck
-        for x in xrange(0, computer.pC['handsize']):
-            
-            # Shuffle deck computer.pC['handsize'] times
-            # if length of PC deck = 0
-            # Will only be done once
-            if len(computer.pC['deck']) == 0: 
-                random.shuffle(computer.pC['discard'])   # Shuffle discard pile
-                computer.pC['deck'] = computer.pC['discard']      # Make deck the discard pile
-                computer.pC['discard'] = []              # empty the discard pile
-            card = computer.pC['deck'].pop()
-            computer.pC['hand'].append(card)
+        # Move cards from PC deck to PC hand
+        computer.deck_to_hand()
         
         print "Computer turn ending"
         
+        # logging
+        logger.debug("End Computer Turn...")
         #### End PC Turn ####
         
         # Display engine.central cards state
-        print "Available Cards"
-        for card in engine.central['active']:
-            print card
+        engine.print_active_cards()
         
         # Display supplements
-        print "Supplement"
-        if len(engine.central['supplement']) > 0:
-            print engine.central['supplement'][0]
+        engine.print_supplements()
         
         # Display health state
-        print "\nPlayer Health %s" % user.pO['health']
-        print "Computer Health %s" % computer.pC['health']
+        print ""
+        user.show_health()
+        computer.show_health()
         
         
         # Check for end of game
@@ -481,36 +426,14 @@ if __name__ == '__main__':
                     engine.central['active'].append(card)
                     count = count + 1
                 
-                # Move cards from User deck
-                # to User's hand
-                for x in xrange(0, user.pO['handsize']):
-                    if len(user.pO['deck']) == 0:
-                        random.shuffle(user.pO['discard'])
-                        user.pO['deck'] = user.pO['discard']
-                        user.pO['discard'] = []
-                    card = user.pO['deck'].pop()
-                    user.pO['hand'].append(card)
+                # Move cards from User deck to User's hand
+                user.deck_to_hand()
                 
-                # Move cards from PC deck
-                # to PC's hand
-                for x in xrange(0, user.pO['handsize']):
-                    if len(computer.pC['deck']) == 0:
-                        random.shuffle(user.pO['discard'])
-                        computer.pC['deck'] = computer.pC['discard']
-                        computer.pC['discard'] = []
-                    card = computer.pC['deck'].pop()
-                    computer.pC['hand'].append(card)
+                # Move cards from PC deck to PC's hand
+                computer.deck_to_hand()
                 
-                # Display card engine.central card state
-                print "Available Cards"
-                count = 0
-                while count < engine.central['activesize']:
-                    print engine.central['active'][count]
-                    count = count + 1
-                
-                # Display sumpplements
-                print "Supplement"
-                if len(engine.central['supplement']) > 0:
-                    print engine.central['supplement'][0]
+                # Display engine.central cards state
+                engine.print_active_cards_hand()
+                engine.print_supplements()
     
     sys.exit() # Terminate

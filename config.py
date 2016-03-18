@@ -1,13 +1,92 @@
 # This file contains the initial config data
 import itertools, random
+from functools import wraps
+import logging
+logging.basicConfig(level=logging.INFO)
+
+
+# http://stackoverflow.com/a/6307868/4013571
+def wrap_all(decorator):
+    """wraps all function with the wrapper provided as an argument"""
+    def decorate(cls):
+        for attr in cls.__dict__: # there's propably a better way to do this
+            if callable(getattr(cls, attr)):
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+    return decorate
+
+def log_me(func):
+    """Adds a logging facility to all functions it wraps"""
+    @wraps(func)
+    def tmp(*args, **kwargs):
+        func_name = func.__name__
+        if func_name != '__init__':
+            args[0].logger.debug('...running {}'.format(func_name))
+        return func(*args, **kwargs)
+    return tmp
+
+@wrap_all(log_me)
+class Common(object):
+    def __init__(self):
+        # creates an attribute based on the class
+        
+        pass
+    
+    def deck_to_hand(self):
+        """
+        Move cards from engine.central deck 
+        to active engine.central deck
+        
+        Container is the dictionary within the
+        class that need to be called with the
+        getattr()
+        """
+        
+        player = getattr(self, self.whoami)
+        
+        # For each index in player hand
+        # Refills player hand from player deck.
+        # If deck is empty, discard pile is shuffled
+        # and becomes deck
+        for x in xrange(0, player['handsize']):
+            
+            # Shuffle deck computer.pC['handsize'] times
+            # if length of deck = 0
+            # Will only be done once
+            if (len(player['deck']) == 0):
+                random.shuffle(player['discard'])   # Shuffle discard pile
+                player['deck'] = player['discard']  # Make deck the discard
+                player['discard'] = []              # empty the discard pile
+            card = player['deck'].pop()
+            player['hand'].append(card)
+        pass
+    
+    def show_health(self):
+        """Shows players' health"""
+        # creates an attribute based on the class
+        player = getattr(self, self.whoami)
+        print "{} Health {}".format(player['name'],player['health'])
+        pass
+    
+    def print_active_cards(self):
+        """Display cards in active"""
+        
+        player = getattr(self, self.whoami)
+        if_user = "Your " if self.whoami == 'pO' else ""
+        
+        print if_user + "Available Cards"
+        for card in player['active']:
+            print card
+        pass
 
 class Card(object):
     """Creates the card objects used in game"""
+    
     def __init__(self, name, values=(0, 0), cost=1):
         self.name = name
         self.cost = cost
         self.values = values
-    
+        
     def __str__(self):
         return 'Name %s costing %s with attack %s and money %s' \
             % (self.name, self.cost, self.values[0], self.values[1])
@@ -17,15 +96,25 @@ class Card(object):
     
     def get_money(self):
         return self.values[1]
-    
 # separates classes in my editor
-class Central(object):
+@wrap_all(log_me)
+class Central(Common):
     """The Central Deck Class"""
+    
     def __init__(self):
         """initial settings for the central cards"""
+        
+        # logging
+        self.logger = logging.getLogger(__name__ + ".Central")
+        self.logger.debug("Central Created.")
+        
+        # my name
+        self.whoami = 'central'
+        
         # create newgame paramters
         self.newgame()
         pass
+    
     
     def newgame(self):
         self.central = { # Central deck settings
@@ -61,6 +150,7 @@ class Central(object):
         self.central['supplement'] = self.supplement
         self.central['active'] = []
         pass
+    
     
     def replay(self):
         """creates parameters for newgame"""
@@ -99,18 +189,45 @@ class Central(object):
         self.central['supplement'] = self.supplement
         self.central['active'] = []
         pass
-
+        
+    
+    def deck_to_active(self):
+        """ moves cards from one item to another"""
+        count = 0
+        while count < self.central['activesize']:
+            card = self.central['deck'].pop()
+            self.central['active'].append(card)
+            count += 1
+        pass
+    def print_supplements(self):
+        """Display supplements"""
+        print "Supplement"
+        if len(self.central['supplement']) > 0:
+            print self.central['supplement'][0]
+        pass
 # separates classes in my editor
-class User(object):
+@wrap_all(log_me)
+class User(Common):
     """The User Class"""
+    
     def __init__(self):
         """initial settings for the User"""
+        
+        # logging
+        self.logger = logging.getLogger(__name__ + ".User")
+        self.logger.debug("User Created.")
+        
+        # my name
+        self.whoami = 'pO'
+        
         # create newgame paramters
         self.newgame()
         pass
     
+    
     def newgame(self):
         """initial default settings for the user"""
+        
         # Initial settings
         self.pO = { # User settings
             'name': 'player one',
@@ -135,6 +252,7 @@ class User(object):
         self.pO['discard'] = []
         self.pO['active'] = []
         pass
+    
     
     def replay(self):
         """creates parameters for newgame"""
@@ -162,15 +280,35 @@ class User(object):
         self.pO['discard'] = []
         self.pO['active'] = []
 
+    def print_hand(self):
+        """displays the indexed user hand"""
+        
+        # Display User hand
+        print "\nYour Hand"
+        index = 0
+        for card in self.pO['hand']:
+            print "[%s] %s" % (index, card)
+            index = index + 1
+        pass
 # separates classes in my editor
-class Computer(object):
+@wrap_all(log_me)
+class Computer(Common):
     """The Computer Player Class"""
+    
     def __init__(self):
         """initial settings for the computer player"""
+        
+        # logging
+        self.logger = logging.getLogger(__name__ + ".Computer")
+        self.logger.debug("Computer Created.")
+        
+        # my name
+        self.whoami = 'pC'
         
         # create newgame paramters
         self.newgame()
         
+    
     def newgame(self):
         self.pC = { # PC settings
             'name': 'player computer',
@@ -195,6 +333,7 @@ class Computer(object):
         self.pC['discard'] = []
         self.pC['active'] = []
         pass
+    
     
     def replay(self):
         """creates parameters for newgame"""

@@ -3,7 +3,7 @@ from config import *
 import itertools, random
 import collections
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def flatten(l):
     """This flattens arbitrarily annoying lists / dicts"""
@@ -20,7 +20,7 @@ class Settings(object):
         """run tests"""
         
         # creates a logger for the test file
-        self.logger = logging.getLogger("Settings")
+        self.logger = logging.getLogger(__name__+".Settings")
         self.logger.info('Logger started.')
         
         # create classes of users and central deck
