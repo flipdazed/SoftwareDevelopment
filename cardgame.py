@@ -8,49 +8,47 @@ from config import *
 
 if __name__ == '__main__':
     
-    # get configuration settings
-    config = GetConfig()
+    # instanciate the game settings
+    user = User()
+    computer = Computer()
+    engine = Central()
     
-    # set initial global variables from config iterable
-    for item_name,item in config.initial():
-        globals()[item_name] = item
-    
-    # Move cards from central deck 
-    # to active central deck
+    # Move cards from engine.central deck 
+    # to active engine.central deck
     count = 0
-    while count < central['activesize']:
-        card = central['deck'].pop()
-        central['active'].append(card)
+    while count < engine.central['activesize']:
+        card = engine.central['deck'].pop()
+        engine.central['active'].append(card)
         count = count + 1
     
     # Move cards from User deck
     # to User's hand
-    for x in xrange(0, pO['handsize']):
-        if (len(pO['deck']) == 0):
-            random.shuffle(pO['discard'])
-            pO['deck'] = pO['discard']
-            pO['discard'] = []
-        card = pO['deck'].pop()
-        pO['hand'].append(card)
+    for x in xrange(0, user.pO['handsize']):
+        if (len(user.pO['deck']) == 0):
+            random.shuffle(user.pO['discard'])
+            user.pO['deck'] = user.pO['discard']
+            user.pO['discard'] = []
+        card = user.pO['deck'].pop()
+        user.pO['hand'].append(card)
     
     # Move cards from PC deck
     # to PC's hand
-    for x in xrange(0, pO['handsize']):
-        if len(pC['deck']) == 0:
-            random.shuffle(pO['discard'])
-            pC['deck'] = pC['discard']
-            pC['discard'] = []
-        card = pC['deck'].pop()
-        pC['hand'].append(card)
+    for x in xrange(0, user.pO['handsize']):
+        if len(computer.pC['deck']) == 0:
+            random.shuffle(user.pO['discard'])
+            computer.pC['deck'] = computer.pC['discard']
+            computer.pC['discard'] = []
+        card = computer.pC['deck'].pop()
+        computer.pC['hand'].append(card)
     
-    # Display central cards state
+    # Display engine.central cards state
     print "Available Cards"
-    for card in central['active']:
+    for card in engine.central['active']:
         print card
     
     print "Supplement"
-    if len(central['supplement']) > 0:
-        print central['supplement'][0]
+    if len(engine.central['supplement']) > 0:
+        print engine.central['supplement'][0]
     
     # Starting the game
     iplay_game = raw_input("Do you want to play a game?").upper()
@@ -69,13 +67,13 @@ if __name__ == '__main__':
         while True: # User's Turn
             
             # Display health state
-            print "\nPlayer Health %s" % pO['health']
-            print "Computer Health %s" % pC['health']
+            print "\nPlayer Health %s" % user.pO['health']
+            print "Computer Health %s" % computer.pC['health']
             
             # Display User hand
             print "\nYour Hand"
             index = 0
-            for card in pO['hand']:
+            for card in user.pO['hand']:
                     print "[%s] %s" % (index, card)
                     index = index + 1
             
@@ -83,26 +81,26 @@ if __name__ == '__main__':
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
             iuser_action = raw_input("Enter Action: ").upper()
             if iuser_action == 'P':      # Play all cards
-                if(len(pO['hand'])>0):  # Are there cards in the hand
+                if(len(user.pO['hand'])>0):  # Are there cards in the hand
                 
                     # transfer all cards from hand to active
                     # add values in hand to current totals
-                    for x in xrange(0, len(pO['hand'])):
-                        card = pO['hand'].pop()
-                        pO['active'].append(card)
+                    for x in xrange(0, len(user.pO['hand'])):
+                        card = user.pO['hand'].pop()
+                        user.pO['active'].append(card)
                         money = money + card.get_money()
                         attack = attack + card.get_attack()
                 
                 # Display User hand
                 print "\nYour Hand"
                 index = 0
-                for card in pO['hand']:
+                for card in user.pO['hand']:
                     print "[%s] %s" % (index, card)
                     index = index + 1
                 
                 # Display User active cards
                 print "\nYour Active Cards"
-                for card in pO['active']:
+                for card in user.pO['active']:
                     print card
                 
                 # Display User values
@@ -110,12 +108,12 @@ if __name__ == '__main__':
                 print "Money %s, Attack %s" % (money, attack)
                 
             if iuser_action.isdigit():   # Play a specific card
-                if( int(iuser_action) < len(pO['hand'])):
+                if( int(iuser_action) < len(user.pO['hand'])):
                     
                     # Transfer card to active
                     # add values in hand to current totals
-                    card = pO['hand'].pop(int(iuser_action))
-                    pO['active'].append(card)
+                    card = user.pO['hand'].pop(int(iuser_action))
+                    user.pO['active'].append(card)
                     money = money + card.get_money()
                     attack = attack + card.get_attack()
                     
@@ -123,13 +121,13 @@ if __name__ == '__main__':
                 # Display User hand
                 print "\nYour Hand"
                 index = 0
-                for card in pO['hand']:
+                for card in user.pO['hand']:
                     print "[%s] %s" % (index, card)
                     index = index + 1
                 
                 # Display User active cards
                 print "\nYour Active Cards"
-                for card in pO['active']:
+                for card in user.pO['active']:
                     print card
                 
                 # Display User values
@@ -141,9 +139,9 @@ if __name__ == '__main__':
                 # Check player has money available
                 while money > 0: # no warning of no money
                     
-                    # Display central cards state
+                    # Display engine.central cards state
                     print "Available Cards"
-                    for card in central['active']:
+                    for card in engine.central['active']:
                         print card
                     
                     # User chooses a card to purchase
@@ -152,13 +150,13 @@ if __name__ == '__main__':
                     
                     # Evaluate choice
                     if ibuy_input == 'S': # Buy a supplement
-                        if len(central['supplement']) > 0: # If supplements exist
+                        if len(engine.central['supplement']) > 0: # If supplements exist
                             
                             # Buy if player has enough money
                             # Move to player's discard pile
-                            if money >= central['supplement'][0].cost:
-                                money = money - central['supplement'][0].cost
-                                pO['discard'].append(central['supplement'].pop())
+                            if money >= engine.central['supplement'][0].cost:
+                                money = money - engine.central['supplement'][0].cost
+                                user.pO['discard'].append(engine.central['supplement'].pop())
                                 print "Supplement Bought"
                             else:
                                 print "insufficient money to buy"
@@ -168,22 +166,22 @@ if __name__ == '__main__':
                     elif ibuy_input == 'E': # User ends shopping spree
                         break
                     elif ibuy_input.isdigit(): # Buy a card
-                        if int(ibuy_input) < len(central['active']): # If card exists
+                        if int(ibuy_input) < len(engine.central['active']): # If card exists
                              # Buy if User has enough money
                              # Move directly to discard pile
-                             if money >= central['active'][int(ibuy_input)].cost:
-                                money = money - central['active'][int(ibuy_input)].cost
-                                pO['discard'].append(central['active'].pop(int(ibuy_input)))
+                             if money >= engine.central['active'][int(ibuy_input)].cost:
+                                money = money - engine.central['active'][int(ibuy_input)].cost
+                                user.pO['discard'].append(engine.central['active'].pop(int(ibuy_input)))
                                 
-                                # Refill active from central deck
-                                # if there are cards in central
-                                if( len(central['deck']) > 0):
-                                    card = central['deck'].pop()
-                                    central['active'].append(card)
+                                # Refill active from engine.central deck
+                                # if there are cards in engine.central
+                                if( len(engine.central['deck']) > 0):
+                                    card = engine.central['deck'].pop()
+                                    engine.central['active'].append(card)
                                 else:
-                                    # If no cards in central deck,
+                                    # If no cards in engine.central deck,
                                     # reduce activesize by 1
-                                    central['activesize'] -= 1
+                                    engine.central['activesize'] -= 1
                                 print "Card bought"
                              else:
                                 print "insufficient money to buy"
@@ -194,55 +192,55 @@ if __name__ == '__main__':
             
             
             if iuser_action == 'A':      # Attack
-                pC['health'] -= attack
+                computer.pC['health'] -= attack
                 attack = 0
             if iuser_action == 'E':      # Ends turn
                 
                 # If User has cards in the hand add to discard pile
-                if (len(pO['hand']) >0 ):
-                    for x in xrange(0, len(pO['hand'])):
-                        pO['discard'].append(pO['hand'].pop())
+                if (len(user.pO['hand']) >0 ):
+                    for x in xrange(0, len(user.pO['hand'])):
+                        user.pO['discard'].append(user.pO['hand'].pop())
                 
                 # If there cards in User active deck
                 # then move all cards from active to discard
-                if (len(pO['active']) >0 ):
-                    for x in xrange(0, len(pO['active'])):
-                        pO['discard'].append(pO['active'].pop())
+                if (len(user.pO['active']) >0 ):
+                    for x in xrange(0, len(user.pO['active'])):
+                        user.pO['discard'].append(user.pO['active'].pop())
                 
                 # For each index in player hand
                 # Refills User hand from User deck.
                 # If deck is empty, discard pile is shuffled
                 # and becomes deck
-                for x in xrange(0, pO['handsize']):
-                    if len(pO['deck']) == 0:
+                for x in xrange(0, user.pO['handsize']):
+                    if len(user.pO['deck']) == 0:
                         
                         # Shuffle deck User['handsize'] times
                         # if length of User deck = 0
                         # Will only be done once
-                        random.shuffle(pO['discard'])   # Shuffle discard pile
-                        pO['deck'] = pO['discard']      # Make deck the discard pile
-                        pO['discard'] = []              # empty the discard pile
+                        random.shuffle(user.pO['discard'])   # Shuffle discard pile
+                        user.pO['deck'] = user.pO['discard']      # Make deck the discard pile
+                        user.pO['discard'] = []              # empty the discard pile
                         
                     # Refill User hand from deck by 1 card
-                    card = pO['deck'].pop()
-                    pO['hand'].append(card)
+                    card = user.pO['deck'].pop()
+                    user.pO['hand'].append(card)
                 break
         
         #### End User Turn ####
         
-        # Display central cards state
+        # Display engine.central cards state
         print "Available Cards"
-        for card in central['active']:
+        for card in engine.central['active']:
             print card
         
         # Display supplements
         print "Supplement"
-        if len(central['supplement']) > 0:
-            print central['supplement'][0]
+        if len(engine.central['supplement']) > 0:
+            print engine.central['supplement'][0]
         
         # Display health state
-        print "\nPlayer Health %s" % pO['health']
-        print "Computer Health %s" % pC['health']
+        print "\nPlayer Health %s" % user.pO['health']
+        print "Computer Health %s" % computer.pC['health']
         
         
         #### Start PC Turn ####
@@ -253,9 +251,9 @@ if __name__ == '__main__':
         attack = 0
         
         # Sum up money and attack in PC hand
-        for x in xrange(0, len(pC['hand'])):
-                        card = pC['hand'].pop()
-                        pC['active'].append(card)
+        for x in xrange(0, len(computer.pC['hand'])):
+                        card = computer.pC['hand'].pop()
+                        computer.pC['active'].append(card)
                         money = money + card.get_money()
                         attack = attack + card.get_attack()
         
@@ -264,12 +262,12 @@ if __name__ == '__main__':
         
         # PC starts by attacking User
         print " Computer attacking with strength %s" % attack
-        pO['health'] -= attack
+        user.pO['health'] -= attack
         attack = 0
         
         # Display health state
-        print "\nPlayer Health %s" % pO['health']
-        print "Computer Health %s" % pC['health']
+        print "\nPlayer Health %s" % user.pO['health']
+        print "Computer Health %s" % computer.pC['health']
         
         # Display PC state
         print " Computer player values attack %s, money %s" % (attack, money)
@@ -289,16 +287,16 @@ if __name__ == '__main__':
                 templist = [] # This will be a list of tuples
                 
                 # Select Supplements if cost < money
-                if len(central['supplement']) > 0:                  # If there are any supplements
-                    if central['supplement'][0].cost <= money:      # If PC has enough money
+                if len(engine.central['supplement']) > 0:                  # If there are any supplements
+                    if engine.central['supplement'][0].cost <= money:      # If PC has enough money
                         # Add to temporary purchases
-                        templist.append(("S", central['supplement'][0]))
+                        templist.append(("S", engine.central['supplement'][0]))
                 
                 # Select cards where cost of card_i < money
-                for intindex in xrange(0, central['activesize']):  # Loop all cards
-                    if central['active'][intindex].cost <= money:   # if PC has enough money
+                for intindex in xrange(0, engine.central['activesize']):  # Loop all cards
+                    if engine.central['active'][intindex].cost <= money:   # if PC has enough money
                         # Add to temporary purchases
-                        templist.append((intindex, central['active'][intindex]))
+                        templist.append((intindex, engine.central['active'][intindex]))
                 
                 if len(templist) >0: # If more than one card was added to templist
                     
@@ -337,37 +335,37 @@ if __name__ == '__main__':
                     source = templist[highestIndex][0]
                     
                     # This is a card from the active deck
-                    if source in xrange(0,central['activesize']):
+                    if source in xrange(0,engine.central['activesize']):
                         
                         # If PC has money to purchase:
                         # comparison has alrady been made
-                        if money >= central['active'][int(source)].cost:
+                        if money >= engine.central['active'][int(source)].cost:
                             
                             # Add card to PC discard pile
-                            money = money - central['active'][int(source)].cost
-                            card = central['active'].pop(int(source))
+                            money = money - engine.central['active'][int(source)].cost
+                            card = engine.central['active'].pop(int(source))
                             print "Card bought %s" % card
-                            pC['discard'].append(card)
+                            computer.pC['discard'].append(card)
                             
-                            # Refill active from central deck
-                            # if there are cards in central
-                            if( len(central['deck']) > 0):
-                                card = central['deck'].pop()
-                                central['active'].append(card)
+                            # Refill active from engine.central deck
+                            # if there are cards in engine.central
+                            if( len(engine.central['deck']) > 0):
+                                card = engine.central['deck'].pop()
+                                engine.central['active'].append(card)
                             else:
-                                # If no cards in central deck,
+                                # If no cards in engine.central deck,
                                 # reduce activesize by 1
-                                central['activesize'] -= 1
+                                engine.central['activesize'] -= 1
                         else:
                             print "Error Occurred"
                     
                     else: # This is a supplement as it is not in the range [0,5]
                         # If PC has money to purchase:
                         # comparison has alrady been made
-                        if money >= central['supplement'][0].cost:
-                            money = money - central['supplement'][0].cost
-                            card = central['supplement'].pop()
-                            pC['discard'].append(card)
+                        if money >= engine.central['supplement'][0].cost:
+                            money = money - engine.central['supplement'][0].cost
+                            card = engine.central['supplement'].pop()
+                            computer.pC['discard'].append(card)
                             print "Supplement Bought %s" % card
                         else:
                             print "Error Occurred"
@@ -383,76 +381,76 @@ if __name__ == '__main__':
             print "No Money to buy anything"
         
         # If PC has cards in the hand add to discard pile
-        if (len(pC['hand']) > 0 ):
+        if (len(computer.pC['hand']) > 0 ):
             # Iterate through all cards in PC hand
-            for x in xrange(0, len(pC['hand'])):
-                pC['discard'].append(pC['hand'].pop())
+            for x in xrange(0, len(computer.pC['hand'])):
+                computer.pC['discard'].append(computer.pC['hand'].pop())
         
         # If there cards in PC active deck
         # then move all cards from active to discard
         # currently this will alwayds be true as PC
         # plays all by default.
-        if (len(pC['active']) > 0 ):
-            for x in xrange(0, len(pC['active'])):
-                pC['discard'].append(pC['active'].pop())
+        if (len(computer.pC['active']) > 0 ):
+            for x in xrange(0, len(computer.pC['active'])):
+                computer.pC['discard'].append(computer.pC['active'].pop())
         
         # For each index in player hand
         # Refills PC hand from PC deck.
         # If deck is empty, discard pile is shuffled
         # and becomes deck
-        for x in xrange(0, pC['handsize']):
+        for x in xrange(0, computer.pC['handsize']):
             
-            # Shuffle deck pC['handsize'] times
+            # Shuffle deck computer.pC['handsize'] times
             # if length of PC deck = 0
             # Will only be done once
-            if len(pC['deck']) == 0: 
-                random.shuffle(pC['discard'])   # Shuffle discard pile
-                pC['deck'] = pC['discard']      # Make deck the discard pile
-                pC['discard'] = []              # empty the discard pile
-            card = pC['deck'].pop()
-            pC['hand'].append(card)
+            if len(computer.pC['deck']) == 0: 
+                random.shuffle(computer.pC['discard'])   # Shuffle discard pile
+                computer.pC['deck'] = computer.pC['discard']      # Make deck the discard pile
+                computer.pC['discard'] = []              # empty the discard pile
+            card = computer.pC['deck'].pop()
+            computer.pC['hand'].append(card)
         
         print "Computer turn ending"
         
         #### End PC Turn ####
         
-        # Display central cards state
+        # Display engine.central cards state
         print "Available Cards"
-        for card in central['active']:
+        for card in engine.central['active']:
             print card
         
         # Display supplements
         print "Supplement"
-        if len(central['supplement']) > 0:
-            print central['supplement'][0]
+        if len(engine.central['supplement']) > 0:
+            print engine.central['supplement'][0]
         
         # Display health state
-        print "\nPlayer Health %s" % pO['health']
-        print "Computer Health %s" % pC['health']
+        print "\nPlayer Health %s" % user.pO['health']
+        print "Computer Health %s" % computer.pC['health']
         
         
         # Check for end of game
         # continue_game = False flags the end of a game
-        if pO['health'] <= 0:   # User has died
+        if user.pO['health'] <= 0:   # User has died
             continue_game = False
             print "Computer wins"
-        elif pC['health'] <= 0: # PC has died
+        elif computer.pC['health'] <= 0: # PC has died
             continue_game = False
             print 'Player One Wins'
         
         # Game ends if size of active deck is zero
-        elif central['activesize'] == 0:
+        elif engine.central['activesize'] == 0:
             print "No more cards available"
-            if pO['health'] > pC['health']:
+            if user.pO['health'] > computer.pC['health']:
                 print "Player One Wins on Health"
-            elif pC['health'] > pO['health']:
+            elif computer.pC['health'] > user.pO['health']:
                 print "Computer Wins"
             else: # No clear winner: compare card stengths
                 pHT = 0
-                pCT = 0
-                if pHT > pCT:
+                computer.pCT = 0
+                if pHT > computer.pCT:
                     print "Player One Wins on Card Strength"
-                elif pCT > pHT:
+                elif computer.pCT > pHT:
                     print "Computer Wins on Card Strength"
                 else:
                     print "Draw"
@@ -470,48 +468,49 @@ if __name__ == '__main__':
                 iopponent_type = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent").upper()
                 aggressive = (iopponent_type=='A')
                 
-                # set new game global variables from config iterable
-                for item_name,item in config.newgame():
-                    globals()[item_name] = item
+                # call the replay game settings
+                user.replay()
+                computer.replay()
+                engine.replay()
                 
-                # Move cards from central deck 
-                # to active central deck
+                # Move cards from engine.central deck 
+                # to active engine.central deck
                 count = 0
-                while count < central['activesize']:
-                    card = central['deck'].pop()
-                    central['active'].append(card)
+                while count < engine.central['activesize']:
+                    card = engine.central['deck'].pop()
+                    engine.central['active'].append(card)
                     count = count + 1
                 
                 # Move cards from User deck
                 # to User's hand
-                for x in xrange(0, pO['handsize']):
-                    if len(pO['deck']) == 0:
-                        random.shuffle(pO['discard'])
-                        pO['deck'] = pO['discard']
-                        pO['discard'] = []
-                    card = pO['deck'].pop()
-                    pO['hand'].append(card)
+                for x in xrange(0, user.pO['handsize']):
+                    if len(user.pO['deck']) == 0:
+                        random.shuffle(user.pO['discard'])
+                        user.pO['deck'] = user.pO['discard']
+                        user.pO['discard'] = []
+                    card = user.pO['deck'].pop()
+                    user.pO['hand'].append(card)
                 
                 # Move cards from PC deck
                 # to PC's hand
-                for x in xrange(0, pO['handsize']):
-                    if len(pC['deck']) == 0:
-                        random.shuffle(pO['discard'])
-                        pC['deck'] = pC['discard']
-                        pC['discard'] = []
-                    card = pC['deck'].pop()
-                    pC['hand'].append(card)
+                for x in xrange(0, user.pO['handsize']):
+                    if len(computer.pC['deck']) == 0:
+                        random.shuffle(user.pO['discard'])
+                        computer.pC['deck'] = computer.pC['discard']
+                        computer.pC['discard'] = []
+                    card = computer.pC['deck'].pop()
+                    computer.pC['hand'].append(card)
                 
-                # Display card central card state
+                # Display card engine.central card state
                 print "Available Cards"
                 count = 0
-                while count < central['activesize']:
-                    print central['active'][count]
+                while count < engine.central['activesize']:
+                    print engine.central['active'][count]
                     count = count + 1
                 
                 # Display sumpplements
                 print "Supplement"
-                if len(central['supplement']) > 0:
-                    print central['supplement'][0]
+                if len(engine.central['supplement']) > 0:
+                    print engine.central['supplement'][0]
     
     sys.exit() # Terminate
