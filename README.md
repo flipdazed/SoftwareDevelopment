@@ -1,5 +1,5 @@
 # SoftwareDevelopment
-Code providing the basis for a module in Software Development
+Deliberately bad code providing the basis for a module in Software Development
 
 ##Assessed Criteria: Improvement and Reflection
 The main part of this submission should be a new version of the code, implementing the changes you proposed in Planning and Risks. Your submission should include any required files such as build and/or test files. The submitted code must be runnable and be able to be used to play games. 
