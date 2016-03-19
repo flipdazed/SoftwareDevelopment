@@ -1,12 +1,13 @@
-# ___Change Log (from previous)___
-# Comments and readability added where necessary as part of debug
+# This is the main game file
 
 import sys
 import random
-from engine import *
+import game_engine
 import logging
+# initiates logging for this file
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+# assumes same log level of game_engine file
+logging.basicConfig(level=game_engine.loglevel)
 
 if __name__ == '__main__':
     
@@ -14,9 +15,9 @@ if __name__ == '__main__':
     logger.debug("Starting Game...")
     
     # instanciate the game settings
-    user = User()
-    computer = Computer()
-    engine = Central()
+    user = game_engine.User()
+    computer = game_engine.Computer()
+    engine = game_engine.Central()
     
     # Move cards from engine.central deck 
     # to active engine.central deck
@@ -393,9 +394,9 @@ if __name__ == '__main__':
                 aggressive = (iopponent_type=='A')
                 
                 # call the replay game settings
-                user.replay()
-                computer.replay()
-                engine.replay()
+                user.newgame()
+                computer.newgame()
+                engine.newgame()
                 
                 # Move cards from engine.central deck 
                 # to active engine.central deck

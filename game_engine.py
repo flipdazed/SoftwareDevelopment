@@ -2,7 +2,7 @@
 import itertools, random
 from functools import wraps
 import logging
-loglevel=logging.DEBUG
+loglevel=logging.INFO
 
 # http://stackoverflow.com/a/6307868/4013571
 def wrap_all(decorator):
@@ -30,17 +30,17 @@ class Card(object):
     def __init__(self, name, values=(0, 0), cost=1):
         self.name = name
         self.cost = cost
-        self.values = values
+        self.attack, self.money = values
         
     def __str__(self):
         return 'Name %s costing %s with attack %s and money %s' \
-            % (self.name, self.cost, self.values[0], self.values[1])
+            % (self.name, self.cost, self.attack, self.money)
     
     def get_attack(self):
-        return self.values[0]
+        return self.attack
     
     def get_money(self):
-        return self.values[1]
+        return self.money
 
 @wrap_all(log_me)
 class CommonActions(object):
@@ -213,44 +213,6 @@ class Central(CommonActions):
         pass
     
     
-    def replay(self):
-        """creates parameters for newgame"""
-        
-        self.central = { # Central deck settings
-            'name': 'central',
-            'active': None,
-            'activesize': 5,
-            'supplement': None,
-            'deck': None}
-            
-        # Changes are made in this list
-        self.sdc = [ # Central deck cards
-            4 * [Card('Archer', (3, 0), 2)],
-            4 * [Card('Baker', (0, 3), 2)],
-            3 * [Card('Swordsman', (4, 0), 3)],
-            2 * [Card('Knight', (6, 0), 5)],
-            3 * [Card('Tailor', (0, 4), 3)],
-            3 * [Card('Crossbowman', (4, 0), 3)],
-            3 * [Card('Merchant', (0, 5), 4)],
-            4 * [Card('Thug', (2, 0), 1)],
-            4 * [Card('Thief', (1, 1), 1)],
-            2 * [Card('Catapault', (7, 0), 6)],
-            2 * [Card('Caravan', (1, 5), 5)],
-            2 * [Card('Assassin', (5, 0), 4)]]
-        
-        # Creating supplements 
-        self.supplement = 10 * [Card('Levy', (1, 2), 2)]
-        
-        # Flatten central deck to one list
-        self.deck = list(itertools.chain.from_iterable(self.sdc))
-        random.shuffle(self.deck)
-        
-        # Initiate PC deck dictionary
-        self.central['deck'] = self.deck
-        self.central['supplement'] = self.supplement
-        self.central['active'] = []
-        pass
-        
     
     def deck_to_active(self):
         """ moves cards from one item to another"""
@@ -260,12 +222,14 @@ class Central(CommonActions):
             self.central['active'].append(card)
             count += 1
         pass
+    
     def print_supplements(self):
         """Display supplements"""
         print "Supplement"
         if len(self.central['supplement']) > 0:
             print self.central['supplement'][0]
         pass
+    
 # separates classes in my editor
 @wrap_all(log_me)
 class User(CommonActions, CommonUserActions):
@@ -316,32 +280,6 @@ class User(CommonActions, CommonUserActions):
         pass
     
     
-    def replay(self):
-        """creates parameters for newgame"""
-        self.pO = { # User settings
-            'name': 'player one',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
-        
-        # Changes are made in this list
-        # User's deck
-        self.playeronedeck = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]]
-        
-        # Flatten list to one list
-        self.pod = list(itertools.chain.from_iterable(self.playeronedeck))
-        
-        # Initiate new dictionary
-        self.pO['deck'] = self.pod
-        self.pO['hand'] = []
-        self.pO['discard'] = []
-        self.pO['active'] = []
-
     def print_hand(self):
         """displays the indexed user hand"""
         
@@ -388,34 +326,6 @@ class Computer(CommonActions, CommonUserActions):
             2 * [Card('Squire', (1, 0), 0)]]
             
         # Flattens PC deck to one list
-        self.ptd = list(itertools.chain.from_iterable(self.playertwodeck))
-        
-        # Initiate PC deck dictionary
-        self.pC['deck'] = self.ptd
-        self.pC['hand'] = []
-        self.pC['discard'] = []
-        self.pC['active'] = []
-        pass
-    
-    def replay(self):
-        """creates parameters for newgame"""
-        
-        self.pC = {# PC settings
-            'name': 'player computer',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
-        
-        # Changes are made in this list
-        # Create PC deck (list of lists)
-        self.playertwodeck = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]]
-        
-        # Flatten list of lists
         self.ptd = list(itertools.chain.from_iterable(self.playertwodeck))
         
         # Initiate PC deck dictionary
