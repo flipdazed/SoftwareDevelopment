@@ -29,7 +29,7 @@ class Settings(object):
         self.logger.info('Logger started.')
         
         # create classes of users and central deck
-        self.central = game_engine.Central(**config.defaults['engine'])
+        self.engine = game_engine.Central(**config.defaults['engine'])
         self.user = game_engine.User(**config.defaults['user'])
         self.computer = game_engine.Computer(**config.defaults['computer'])
         
@@ -45,12 +45,15 @@ class Settings(object):
     def run_tests(self, tests, display=True):
         """Runs all functions"""
         
+        self.logger.info("Begin Testing Cycle\n")
         # loop through all functions
         # and get results - store in a dictionary
         # prints out if display=True
         for func_name in tests:
             self.logger.info("Running Test: {}".format(func_name))
-            res = getattr(self, func_name)()
+            func = getattr(self, func_name)
+            self.logger.debug(func.__doc__)
+            res = func()
             
             if res: 
                 self.logger.error("Test Failed: {}".format(func_name)) 
@@ -60,9 +63,9 @@ class Settings(object):
         pass
     
     def deck_creator(self):
-        """tests the deck creator"""
+        """Tests the deck creator can correctly create Card() classes"""
         
-        class Card(object):
+        class __Card(object):
             """Original Card Class"""
             
             def __init__(self, name, values=(0, 0), cost=1):
@@ -83,18 +86,18 @@ class Settings(object):
         def expected():
             """Taken directly from original game code"""
             sdc = [ # Central deck cards
-                    4 * [Card('Archer', (3, 0), 2)],
-                    4 * [Card('Baker', (0, 3), 2)],
-                    3 * [Card('Swordsman', (4, 0), 3)],
-                    2 * [Card('Knight', (6, 0), 5)],
-                    3 * [Card('Tailor', (0, 4), 3)],
-                    3 * [Card('Crossbowman', (4, 0), 3)],
-                    3 * [Card('Merchant', (0, 5), 4)],
-                    4 * [Card('Thug', (2, 0), 1)],
-                    4 * [Card('Thief', (1, 1), 1)],
-                    2 * [Card('Catapult', (7, 0), 6)],
-                    2 * [Card('Caravan', (1, 5), 5)],
-                    2 * [Card('Assassin', (5, 0), 4)]]
+                    4 * [__Card('Archer', (3, 0), 2)],
+                    4 * [__Card('Baker', (0, 3), 2)],
+                    3 * [__Card('Swordsman', (4, 0), 3)],
+                    2 * [__Card('Knight', (6, 0), 5)],
+                    3 * [__Card('Tailor', (0, 4), 3)],
+                    3 * [__Card('Crossbowman', (4, 0), 3)],
+                    3 * [__Card('Merchant', (0, 5), 4)],
+                    4 * [__Card('Thug', (2, 0), 1)],
+                    4 * [__Card('Thief', (1, 1), 1)],
+                    2 * [__Card('Catapult', (7, 0), 6)],
+                    2 * [__Card('Caravan', (1, 5), 5)],
+                    2 * [__Card('Assassin', (5, 0), 4)]]
             
             # Flatten central deck to one list
             deck = list(itertools.chain.from_iterable(sdc))
@@ -131,13 +134,38 @@ class Settings(object):
         
         self.computer.newgame()
         self.user.newgame()
-        self.central.newgame()
+        self.engine.newgame()
+        
+        central = { # Central deck settings
+                'name': self.engine.name,
+                'active': self.engine.active,
+                'activesize': self.engine.hand_size,
+                'supplement': self.engine.supplements,
+                'deck': self.engine.deck}
+        # Initial settings
+        pO = { # User settings
+            'name': self.user.name,
+            'health': self.user.health,
+            'deck': self.user.deck,
+            'hand': self.user.hand,
+            'active': self.user.active,
+            'handsize': self.user.hand_size,
+            'discard': self.user.discard}
+        
+        # Initial settings
+        pC = { # User settings
+            'name': self.computer.name,
+            'health': self.computer.health,
+            'deck': self.computer.deck,
+            'hand': self.computer.hand,
+            'active': self.computer.active,
+            'handsize': self.computer.hand_size,
+            'discard': self.computer.discard}
         
         test_attrs = {
-            'computer':self.computer.__dict__,
-            'user':self.user.__dict__,
-            'central':self.central.__dict__}
-        
+            "computer":{'pC':pC},
+            "player":{'pO':pO},
+            "Engine":{'central':central}}
         
         # loop through all variables
         original_settings = self.__original_newgame_settings()

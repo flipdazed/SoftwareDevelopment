@@ -223,13 +223,6 @@ class Central(CommonActions):
         
         random.shuffle(self.deck)
         
-        self.central = { # Central deck settings
-                'name': self.name,
-                'active': self.active,
-                'activesize': self.hand_size,
-                'supplement': self.supplements,
-                'deck': self.deck}
-        
         pass
     
     def deck_to_active(self):
@@ -286,15 +279,6 @@ class User(CommonActions, CommonUserActions):
         
         self.deck = self.deck_creator(self.deck_settings)
         
-        # Initial settings
-        self.pO = { # User settings
-            'name': self.name,
-            'health': self.health,
-            'deck': self.deck,
-            'hand': self.hand,
-            'active': self.active,
-            'handsize': self.hand_size,
-            'discard': self.discard}
         pass
     
     def print_hand(self):
@@ -347,13 +331,4 @@ class Computer(CommonActions, CommonUserActions):
         
         self.deck = self.deck_creator(self.deck_settings)
         
-        # Initial settings
-        self.pC = { # User settings
-            'name': self.name,
-            'health': self.health,
-            'deck': self.deck,
-            'hand': self.hand,
-            'active': self.active,
-            'handsize': self.hand_size,
-            'discard': self.discard}
         pass
