@@ -156,9 +156,7 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
         while True: # User's Turn
             
             # Display health state
-            self.logger.game("")
-            self.show_health()
-            self.parent.computer.show_health()
+            self.parent.display_health_status()
             
             # Display User hand
             self.print_hand()
@@ -376,9 +374,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         self.attack_player(self.parent.user)
         
         # Display health state
-        self.logger.game("")
-        self.parent.user.show_health()
-        self.show_health()
+        self.parent.display_health_status()
         
         # Display PC state
         self.display_values()

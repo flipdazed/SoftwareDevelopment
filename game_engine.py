@@ -146,3 +146,10 @@ class Gameplay(CommonGamePlayLoggers):
         self.central.print_active_cards()
         self.central.print_supplements()
         pass
+    def display_health_status(self):
+        """Displays the health of both players"""
+        # Display health state
+        self.logger.game("")
+        self.user.show_health()
+        self.computer.show_health()
+        pass

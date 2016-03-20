@@ -26,44 +26,52 @@ def main(game):
     
     # Each loop is a new round in the game
     # User goes first followed by PC
+    actors = ["user", "computer"] # players to iterate
     while continue_game:
-        logger.debug("Starting New Round.")
-        
-        #### Start User Turn ####
-        logger.debug("Start User Turn...")
-        game.user.turn()
-        logger.debug("End User Turn.")
-        #### End User Turn ####
-        
-        # display active deck and supplements
-        game.central.display_all_active()
-        
-        # Display health state
-        print
-        game.user.show_health()
-        game.computer.show_health()
-        
-        #### Start PC Turn ####
-        logger.debug("Starting Computer Turn...")
-        game.computer.turn()
-        logger.debug("End Computer Turn...")
-        #### End PC Turn ####
-        
-        # display active deck and supplements
-        game.central.display_all_active()
-        
-        # Display health state
-        print
-        game.user.show_health()
-        game.computer.show_health()
+        logger.debug("Starting New Round")
         
         # Check for end of game
         logger.debug("Checking End Game Conditions...")
-        if game.end():
-            
+        if game.end(): # True if end game conditions are met
             # Asking user if they want to replay
             logger.debug("Starting Replay...")
             continue_game = game.replay()
+            continue # needed to avoid going into next loop
+        else:
+            
+            #### Start User Turn ####
+            logger.debug("Start User Turn...")
+            game.user.turn()
+            logger.debug("End User Turn.")
+            #### End User Turn ####
+            
+            # display active deck and supplements
+            game.central.display_all_active()
+            
+            # Display health state
+            game.display_health_status()
+            
+        # Check for end of game
+        logger.debug("Checking End Game Conditions...")
+        if game.end(): # True if end game conditions are met
+            # Asking user if they want to replay
+            logger.debug("Starting Replay...")
+            continue_game = game.replay()
+            continue
+        else:
+            
+            #### Start PC Turn ####
+            logger.debug("Starting Computer Turn...")
+            game.computer.turn()
+            logger.debug("End Computer Turn...")
+            #### End PC Turn ####
+            
+            # display active deck and supplements
+            game.central.display_all_active()
+            
+            # Display health state
+            game.display_health_status()
+        
     game.exit()
     pass
 
