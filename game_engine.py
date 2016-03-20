@@ -63,13 +63,10 @@ class Central(CommonActions):
     
     def deck_to_active(self):
         """ moves cards from one item to another"""
-        count = 0
-        
-        while count < self.hand_size:
+        for i in xrange(0, self.hand_size):
             card = self.deck.pop()
             self.active.append(card)
-            self.logger.debug('iteration #{}: Moving {} from deck to active'.format(count, card.name))
-            count += 1
+            self.logger.debug('iteration #{}: Moving {} from deck to active'.format(i, card.name))
         pass
     
     def print_supplements(self):
@@ -400,12 +397,12 @@ class Computer(CommonActions, CommonUserActions):
                     self.logger.debug("No Supplements available")
                 
                 # Select cards where cost of card_i < money
-                for intindex in xrange(0, central.hand_size):  # Loop all cards
-                    card = central.active[intindex]
+                for card_index in xrange(0, central.hand_size):  # Loop all cards
+                    card = central.active[card_index]
                     
                     if card.cost <= self.money:   # if PC has enough money
                         # Add to temporary purchases
-                        wish_list.append((intindex, card))
+                        wish_list.append((card_index, card))
                         log_affords_card(self, 1, card.name, card.cost)
                     else:
                         log_affords_card(self, 1, card.name, card.cost, can_afford=False)
@@ -420,17 +417,17 @@ class Computer(CommonActions, CommonUserActions):
                     # Prioritises on attack (self.aggressive) or self.money (greedy)
                     # if equal values
                     self.logger.debug("Finding the most desirable purchase...")
-                    for intindex in xrange(0,len(wish_list)):
+                    for card_index in xrange(0,len(wish_list)):
                         
                         desired = wish_list[highestIndex]
-                        potential = wish_list[intindex]
+                        potential = wish_list[card_index]
                         self.logger.debug("Current most desired card: {}".format(desired[1].name))
                         self.logger.debug("Comparing against potential card: {}".format(potential[1].name))
                         
                         # Primary comparison: Get most expensive card
                         if potential[1].cost > desired[1].cost:
                             self.logger.debug("Primary comparison (Cost) ...")
-                            highestIndex = intindex
+                            highestIndex = card_index
                             
                             log_compare_cards(self, "cost", "is", potential[1].cost, desired[1].cost)
                             log_new_desired(self, highestIndex)
@@ -445,7 +442,7 @@ class Computer(CommonActions, CommonUserActions):
                                 self.logger.debug("Using Aggressive strategy")
                                 # Set highestIndex to this card if highest attack
                                 if potential[1].get_attack() > desired[1].get_attack():
-                                    highestIndex = intindex
+                                    highestIndex = card_index
                                     
                                     log_compare_cards(self, "attack", "is", potential[1].attack, desired[1].attack)
                                     log_new_desired(self, highestIndex)
@@ -456,7 +453,7 @@ class Computer(CommonActions, CommonUserActions):
                                 self.logger.debug("Using Non-Aggressive strategy")
                                 # Set highestIndex to this card if highest money
                                 if potential[1].get_attack() > desired[1].get_money():
-                                    highestIndex = intindex
+                                    highestIndex = card_index
                                     
                                     log_compare_cards(self, "money", "is", potential[1].money, desired[1].money)
                                     log_new_desired(self, highestIndex)
