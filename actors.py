@@ -46,11 +46,11 @@ class CommonUserLoggers(object):
         self.logger.debug("Potential card ({2}:{0}) {3} higher {2} than desired card ({2}:{1})".format(
             pot_val,des_val,val_name,is_isnt))
         pass
-    def logger_new_desired(self, card_index):
+    def logger_new_desired(self):
         """ Displays the new most desired card by the computer
         when iterating through its wishlist
         Only used in Computer.turn()"""
-        self.logger.debug("New desired card index: {}".format(card_index))
+        self.logger.debug("New desired card index: {}".format(self.potential_card_index))
         pass
 # separates classes in my editor
 @wrap_all(log_me)
@@ -376,95 +376,24 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         can_afford_cards = True
         if can_afford_cards and self.money > 0:   # Commence buying if PC has money 
             self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
-            self.logger.game("{} making buying cards... Money {}".format(self.name ,self.money))
+            self.logger.game("{} buying cards with money: {}".format(self.name ,self.money))
             # Loop while cb, conditions:
             # len(self.wish_list) > 0 and money != 0
             # The temporary list of purchased
             # cards in the buying process
-            self.wish_list = [] # This will be a list of tuples
-            self.logger.debug("Temp purchase list (wish list) initiated")
+            self.wish_list = self.get_wish_list()
             
-            # Select Supplements if cost < self.money
-            if len(self.parent.central.supplements) > 0:                  # If there are any supplements
-                self.logger.debug("Supplements Detected by {}".format(self.name))
-                
-                card = self.parent.central.supplements[0]
-                if card.cost <= self.money:      # If PC has enough money
-                    # Add to temporary purchases
-                    self.wish_list.append(("S", card))
-                    self.logger_affords_card(1, card.name, card.cost)
-                else:
-                    self.logger_affords_card(1, card.name, card.cost, can_afford=False)
-            else:
-                self.logger.debug("No Supplements available")
-            
-            # Select cards where cost of card_i < money
-            for card_index in xrange(0, self.parent.central.hand_size):  # Loop all cards
-                
-                self.logger_new_desired(card_index)
-                card = self.parent.central.active[card_index]
-                
-                if card.cost <= self.money:   # if PC has enough money
-                    # Add to temporary purchases
-                    self.wish_list.append((card_index, card))
-                    self.logger_affords_card(1, card.name, card.cost)
-                else:
-                    self.logger_affords_card(1, card.name, card.cost, can_afford=False)
-                
             if len(self.wish_list) > 0: # If more than one card was added to self.wish_list
                 
                 self.logger.debug("Wish list is not empty ({} cards)".format(len(self.wish_list)))
-                highestIndex = 0 # Index of most desirable card purchase
+                self.desired_card_index = 0 # Index of most desirable card purchase
                 
                 # Loop through the temp list by index
                 # Identifies the highest value item in the list
                 # Prioritises on attack (self.aggressive) or self.money (greedy)
                 # if equal values
                 self.logger.debug("Finding the most desirable purchase...")
-                for card_index in xrange(0,len(self.wish_list)):
-                    
-                    desired = self.wish_list[highestIndex]
-                    potential = self.wish_list[card_index]
-                    self.logger.debug("Current most desired card: {}".format(desired[1].name))
-                    self.logger.debug("Comparing against potential card: {}".format(potential[1].name))
-                    
-                    # Primary comparison: Get most expensive card
-                    if potential[1].cost > desired[1].cost:
-                        self.logger.debug("Primary comparison (Cost) ...")
-                        highestIndex = card_index
-                        
-                        self.logger_compare_cards("cost", "is", potential[1].cost, desired[1].cost)
-                        self.logger_new_desired(highestIndex)
-                    else:
-                        self.logger.debug("Primary comparison (Cost) not undertaken.")
-                    
-                    # Secondary comparison: AI chosen strategy
-                    if potential[1].cost == desired[1].cost:
-                        self.logger.debug("Secondary comparison (Strategy Dependent)...")
-                        
-                        if self.aggressive:  # Aggresive strategy
-                            self.logger.debug("Using Aggressive strategy")
-                            # Set highestIndex to this card if highest attack
-                            if potential[1].get_attack() > desired[1].get_attack():
-                                highestIndex = card_index
-                                
-                                self.logger_compare_cards("attack", "is", potential[1].attack, desired[1].attack)
-                                self.logger_new_desired(highestIndex)
-                            else:
-                                self.logger_compare_cards("attack", "is not", potential[1].attack, desired[1].attack)
-                        
-                        else:           # Greedy strategy
-                            self.logger.debug("Using Non-Aggressive strategy")
-                            # Set highestIndex to this card if highest money
-                            if potential[1].get_attack() > desired[1].get_money():
-                                highestIndex = card_index
-                                
-                                self.logger_compare_cards("money", "is", potential[1].money, desired[1].money)
-                                self.logger_new_desired(highestIndex)
-                            else:
-                                self.logger_compare_cards("money", "is not", potential[1].money, desired[1].money)
-                    else:
-                        self.logger.debug("Secondary comparison (Strategy Dependent) not undertaken.")
+                self.desired = self.most_desirable_card_in_wishlist()
                 
                 # Contains two parts of information:
                 # 1. If integer then it is a card from the active deck
@@ -473,68 +402,9 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
                 # If 1. then the integer may take a value
                 # between 0 and up to (not including) the size
                 # if the active deck
-                source = desired[0]
-                self.logger.debug("{0} attempts to purchase {1} (Index: {2})".format(self.name, *desired))
-                
-                # This is a card from the active deck
-                if source in xrange(0,self.parent.central.hand_size):
-                    purchase_card = self.parent.central.active[int(source)]
-                    
-                    self.logger.debug("Index: {} found in Central Hand ({}, cost:{})".format(
-                        source, purchase_card.name, purchase_card.cost))
-                    
-                    # If PC has money to purchase:
-                    # comparison has alrady been made
-                    if self.money >= purchase_card.cost:
-                        self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
-                        
-                        # Add card to PC discard pile
-                        card = self.parent.central.active.pop(int(source))
-                        self.discard.append(card)
-                        
-                        self.logger.game("Card bought {}".format(card))
-                        
-                        new_money = - card.cost
-                        self.logger_buy_card(card, self.money, new_money)
-                        self.money += new_money
-                        
-                        # Refill active from self.parent.central.central deck
-                        # if there are cards in self.parent.central.central
-                        self.logger.debug("Attempting to refill card central active deck from central deck...")
-                        if len(self.parent.central.deck) > 0:
-                            self.logger.debug("{} cards in central deck".format(len(self.parent.central.deck)))
-                            card = self.parent.central.deck.pop()
-                            self.parent.central.active.append(card)
-                            self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
-                        else:
-                            # If no cards in self.parent.central.central deck,
-                            # reduce activesize by 1
-                            self.logger.debug("No cards in central deck to refill central active deck.")
-                            self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
-                            self.parent.central.hand_size -= 1
-                            
-                    else:
-                        self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
-                        self.logger.critical("Error Occurred")
-                
-                else: # This is a supplement as it is not in the range [0,5]
-                    # If PC has money to purchase:
-                    # comparison has alrady been made
-                    purchase_card = self.parent.central.supplements[0]
-                    
-                    if self.money >= purchase_card.cost:
-                        self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
-                        
-                        card = self.parent.central.supplements.pop()
-                        self.discard.append(card)
-                        self.logger.game("Supplement Bought {}".format(card))
-                        
-                        new_money = - card.cost
-                        self.logger_buy_card(card, self.money, new_money)
-                        self.money += new_money
-                    else:
-                        self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
-                        self.logger.critical("Error Occurred")
+                card_index = self.desired[0]
+                self.logger.debug("{0} attempts to purchase {1} (Index: {2})".format(self.name, *self.desired))
+                self.buy_card_by_index(card_index)
                 
                 # ^Loop: Buy another card
             else:           # Exit loop if PC couldn't buy any cards
@@ -548,4 +418,237 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         else:           # Don't buy if no money
             self.logger.debug("{} has no money. Exiting purchase loop with money: {}".format(self.name, self.money))
             self.logger.game("No Money to buy anything")
+        pass
+    
+    def buy_card_by_index(self, source):
+        """Attempts to buy a card given a source
+        
+        Expected format of source = integer or 'S'"""
+        # This is a card from the active deck
+        if source in xrange(0,self.parent.central.hand_size):
+            purchase_card = self.parent.central.active[int(source)]
+            
+            self.logger.debug("Index: {} found in Central Hand ({}, cost:{})".format(
+                source, purchase_card.name, purchase_card.cost))
+            
+            # If PC has money to purchase:
+            # comparison has alrady been made
+            if self.money >= purchase_card.cost:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
+                
+                # Add card to PC discard pile
+                card = self.parent.central.active.pop(int(source))
+                self.discard.append(card)
+                
+                self.logger.game("Card bought {}".format(card))
+                
+                new_money = - card.cost
+                self.logger_buy_card(card, self.money, new_money)
+                self.money += new_money
+                
+                # Refill active from self.parent.central.central deck
+                # if there are cards in self.parent.central.central
+                self.logger.debug("Attempting to refill card central active deck from central deck...")
+                if len(self.parent.central.deck) > 0:
+                    self.logger.debug("{} cards in central deck".format(len(self.parent.central.deck)))
+                    card = self.parent.central.deck.pop()
+                    self.parent.central.active.append(card)
+                    self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
+                else:
+                    # If no cards in self.parent.central.central deck,
+                    # reduce activesize by 1
+                    self.logger.debug("No cards in central deck to refill central active deck.")
+                    self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
+                    self.parent.central.hand_size -= 1
+                    
+            else:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
+                self.logger.critical("Error Occurred")
+        
+        else: # This is a supplement as it is not in the range [0,5]
+            # If PC has money to purchase:
+            # comparison has alrady been made
+            purchase_card = self.parent.central.supplements[0]
+            
+            if self.money >= purchase_card.cost:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
+                
+                card = self.parent.central.supplements.pop()
+                self.discard.append(card)
+                self.logger.game("Supplement Bought {}".format(card))
+                
+                new_money = - card.cost
+                self.logger_buy_card(card, self.money, new_money)
+                self.money += new_money
+            else:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
+                self.logger.critical("Error Occurred")
+        pass
+    def get_wish_list(self):
+        """Gets the list of cards that the computer wishes to try and buy"""
+        self.wish_list = [] # This will be a list of tuples
+        self.logger.debug("Temp purchase list (wish list) initiated")
+        
+        self.__add_affordable_supplements_to_wishlist()
+        self.__add_affordable_cards_to_wishlist()
+        
+        return self.wish_list
+    
+    def most_desirable_card_in_wishlist(self):
+        """This routine expects that self.wish_list exists in the format
+            of [( val, Card() )]
+            where val = integer or "S"
+            It returns a single list element corresponding to the most desired card
+            """
+        desired = self.wish_list[self.desired_card_index]
+        for self.potential_card_index in xrange(0,len(self.wish_list)):
+            
+            potential = self.wish_list[self.potential_card_index]
+            self.logger.debug("Current most desired card: {}".format(desired[1].name))
+            self.logger.debug("Comparing against potential card: {}".format(potential[1].name))
+            
+            self.card_selector_AI(desired, potential)
+            desired = self.wish_list[self.desired_card_index]
+        return desired
+    
+    def card_selector_AI(self, desired, potential):
+        """The computer AI that decides which card it likes the most to buy
+        between two cards provided
+        
+        This function relies on two key global variables:
+            self.desired_card_index
+            self.potential_card_index
+        
+        Expected format of desired, potential:
+            ( val, Card() )
+            where val = integer or "S"
+        """
+        
+        # Primary comparison: Get most expensive card
+        self.logger.debug("Primary comparison (Cost) ...")
+        self.__primary_card_selector_AI(desired, potential)
+        
+        if potential[1].cost == desired[1].cost:
+            # Secondary comparison: AI chosen strategy
+            self.__secondary_card_selector_AI(desired, potential)
+        else:
+            self.logger.debug("Secondary comparison (Strategy Dependent) not undertaken.")
+        pass 
+    def __primary_card_selector_AI(self, desired, potential):
+        """This is the first method that the computer uses to decide on a card purchase
+    
+        This function relies on two key global variables:
+            self.desired_card_index
+            self.potential_card_index
+        
+        Expected format of desired, potential:
+            ( val, Card() )
+            where val = integer or "S"
+        """
+        if potential[1].cost > desired[1].cost:
+            self.desired_card_index = self.potential_card_index
+    
+            self.logger_compare_cards("cost", "is", potential[1].cost, desired[1].cost)
+            self.logger_new_desired() # Log the action
+        else:
+            self.logger_compare_cards("cost", "is not", potential[1].cost, desired[1].cost)
+        pass
+    def __secondary_card_selector_AI(self, desired, potential):
+        """This is the first method that the computer uses to decide on a card purchase
+        
+        This function uses the self.aggressive variable to decide how to proceeed
+        
+        This function relies on two key global variables:
+            self.desired_card_index
+            self.potential_card_index
+        
+        Expected format of desired, potential:
+            ( val, Card() )
+            where val = integer or "S"
+        """
+        self.logger.debug("Secondary comparison (Strategy Dependent)...")
+        
+        if self.aggressive:  # Aggresive strategy
+            self.logger.debug("Using Aggressive strategy")
+            self.__secondary_ai_aggressive_comparison(potential, desired)
+        else:           # Greedy strategy
+            self.logger.debug("Using Non-Aggressive strategy")
+            self.__secondary_ai_nonaggressive_comparison(potential, desired)
+            
+        pass
+    def __secondary_ai_nonaggressive_comparison(self, potential, desired):
+        """This routine is used if the computer is set to aggressive
+        
+        This function relies on two key global variables:
+            self.desired_card_index
+            self.potential_card_index
+        
+        Expected format of desired, potential:
+            ( val, Card() )
+            where val = integer or "S"
+        """
+        # Set self.desired_card_index to this card if highest money
+        if potential[1].get_attack() > desired[1].get_money():
+            self.desired_card_index = self.potential_card_index
+            
+            self.logger_compare_cards("money", "is", potential[1].money, desired[1].money)
+            self.logger_new_desired() # Log the action
+        else:
+            self.logger_compare_cards("money", "is not", potential[1].money, desired[1].money)
+            
+        pass
+    def __secondary_ai_aggressive_comparison(self, potential, desired):
+        """This routine is used if the computer is set to aggressive
+        
+        This function relies on two key global variables:
+            self.desired_card_index
+            self.potential_card_index
+        
+        Expected format of desired, potential:
+            ( val, Card() )
+            where val = integer or "S"
+        """
+        # Set self.desired_card_index to this card if highest attack
+        if potential[1].get_attack() > desired[1].get_attack():
+            self.desired_card_index = self.potential_card_index
+            
+            self.logger_compare_cards("attack", "is", potential[1].attack, desired[1].attack)
+            self.logger_new_desired() # Log the action
+        else:
+            self.logger_compare_cards("attack", "is not", potential[1].attack, desired[1].attack)
+        pass
+    def __add_affordable_cards_to_wishlist(self):
+        """adds the affordable cards the the wish_list
+        expects that self.wish_list exists as a list
+        """
+        # Select cards where cost of card_i < money
+        for self.potential_card_index in xrange(0, self.parent.central.hand_size):  # Loop all cards
+        
+            self.logger_new_desired() # Log the action
+            card = self.parent.central.active[self.potential_card_index]
+        
+            if card.cost <= self.money:   # if PC has enough money
+                # Add to temporary purchases
+                self.wish_list.append((self.potential_card_index, card))
+                self.logger_affords_card(1, card.name, card.cost)  # logger action
+            else:
+                self.logger_affords_card(1, card.name, card.cost, can_afford=False)  # logger action
+        pass
+    def __add_affordable_supplements_to_wishlist(self):
+        """adds the affordable cards the the wish_list
+        expects that self.wish_list exists as a list
+        """
+        # Select Supplements if cost < self.money
+        if len(self.parent.central.supplements) > 0: # If there are any supplements
+            self.logger.debug("Supplements Detected by {}".format(self.name))  # logger action
+            
+            card = self.parent.central.supplements[0]
+            if card.cost <= self.money:      # If PC has enough money
+                # Add to temporary purchases
+                self.wish_list.append(("S", card))
+                self.logger_affords_card(1, card.name, card.cost)  # logger action
+            else:
+                self.logger_affords_card(1, card.name, card.cost, can_afford=False)  # logger action
+        else:
+            self.logger.debug("No Supplements available")
         pass
