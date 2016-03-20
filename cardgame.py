@@ -1,13 +1,11 @@
 # This is the main game file
-
 import sys
 import random
+from logs import *
 import game_engine
-import logging
-# initiates logging for this file
+from config import defaults
+
 logger = logging.getLogger(__name__)
-# assumes same log level of game_engine file
-logging.basicConfig(level=game_engine.loglevel)
 
 if __name__ == '__main__':
     
@@ -15,9 +13,9 @@ if __name__ == '__main__':
     logger.debug("Starting Game...")
     
     # instanciate the game settings
-    user = game_engine.User()
-    computer = game_engine.Computer()
-    engine = game_engine.Central()
+    user = game_engine.User(**defaults['user'])
+    computer = game_engine.Computer(**defaults['computer'])
+    engine = game_engine.Central(**defaults['engine'])
     
     # Move cards from engine.central deck 
     # to active engine.central deck

@@ -1,9 +1,14 @@
 # This is a python testing file
-from engine import *
+import config
+import game_engine
+from game_engine import Card
+from logs import *
+
 import itertools, random
 import collections
-import logging
-loglevel=logging.DEBUG
+
+logger = logging.getLogger(__name__)
+
 
 def flatten(l):
     """This flattens arbitrarily annoying lists / dicts"""
@@ -21,18 +26,18 @@ class Settings(object):
         
         # creates a logger for the test file
         self.logger = logging.getLogger(__name__+".Settings")
-        self.logger.setLevel(loglevel)
         self.logger.info('Logger started.')
         
         # create classes of users and central deck
-        self.central = Central()
-        self.user = User()
-        self.computer = Computer()
+        self.central = game_engine.Central(**config.defaults['engine'])
+        self.user = game_engine.User(**config.defaults['user'])
+        self.computer = game_engine.Computer(**config.defaults['computer'])
         
         # runs all tests
         tests = [
             "newgame_settings",
-            "replay_settings"]
+            "deck_creator"
+            ]
         
         self.run_tests(tests)
         pass
@@ -54,6 +59,73 @@ class Settings(object):
         
         pass
     
+    def deck_creator(self):
+        """tests the deck creator"""
+        
+        class Card(object):
+            """Original Card Class"""
+            
+            def __init__(self, name, values=(0, 0), cost=1):
+                self.name = name
+                self.cost = cost
+                self.attack, self.money = values
+        
+            def __str__(self):
+                return 'Name %s costing %s with attack %s and money %s' \
+                    % (self.name, self.cost, self.attack, self.money)
+            
+            def get_attack(self):
+                return self.attack
+            
+            def get_money(self):
+                return self.money
+        
+        def expected():
+            """Taken directly from original game code"""
+            sdc = [ # Central deck cards
+                    4 * [Card('Archer', (3, 0), 2)],
+                    4 * [Card('Baker', (0, 3), 2)],
+                    3 * [Card('Swordsman', (4, 0), 3)],
+                    2 * [Card('Knight', (6, 0), 5)],
+                    3 * [Card('Tailor', (0, 4), 3)],
+                    3 * [Card('Crossbowman', (4, 0), 3)],
+                    3 * [Card('Merchant', (0, 5), 4)],
+                    4 * [Card('Thug', (2, 0), 1)],
+                    4 * [Card('Thief', (1, 1), 1)],
+                    2 * [Card('Catapult', (7, 0), 6)],
+                    2 * [Card('Caravan', (1, 5), 5)],
+                    2 * [Card('Assassin', (5, 0), 4)]]
+            
+            # Flatten central deck to one list
+            deck = list(itertools.chain.from_iterable(sdc))
+            return deck
+        
+        
+        deck_settings = [ # Central deck paramss
+            {"count":4 ,"params":{"name":'Archer', "attack":3, "money":0, "cost":2}},
+            {"count":4 ,"params":{"name":'Baker', "attack":0, "money":3, "cost":2}},
+            {"count":3 ,"params":{"name":'Swordsman', "attack":4, "money":0, "cost":3}},
+            {"count":2 ,"params":{"name":'Knight', "attack":6, "money":0, "cost":5}},
+            {"count":3 ,"params":{"name":'Tailor', "attack":0, "money":4, "cost":3}},
+            {"count":3 ,"params":{"name":'Crossbowman', "attack":4, "money":0, "cost":3}},
+            {"count":3 ,"params":{"name":'Merchant', "attack":0, "money":5, "cost":4}},
+            {"count":4 ,"params":{"name":'Thug', "attack":2, "money":0, "cost":1}},
+            {"count":4 ,"params":{"name":'Thief', "attack":1, "money":1, "cost":1}},
+            {"count":2 ,"params":{"name":'Catapult', "attack":7, "money":0, "cost":6}},
+            {"count":2 ,"params":{"name":'Caravan', "attack":1, "money":5, "cost":5}},
+            {"count":2 ,"params":{"name":'Assassin', "attack":5, "money":0, "cost":4}}
+            ]
+        
+        # create deck
+        test_deck = self.user.deck_creator(deck_settings)
+        # create expected output
+        expected_deck = expected()
+        
+        # routine returns true if success so result must be not True
+        error = not self.compare_vals(test_deck, expected_deck)
+        
+        return error
+    
     def newgame_settings(self):
         """Tests that new game settings match the original game settings"""
         
@@ -71,25 +143,41 @@ class Settings(object):
         original_settings = self.__original_newgame_settings()
         error = self.__loop_compare(original_settings, test_attrs)
         return error
-    
-    def replay_settings(self):
-        """Tests that replay game settings match the original game settings"""
+
+    def compare_vals(self, a, b):
+        """Compares values from the game
         
-        # create parameters for tests
-        self.computer.replay()
-        self.user.replay()
-        self.central.replay()
+        Input::
+        a,b :: Iterables - recursive allowed can contain Card()
         
-        test_attrs = {
-            'computer':self.computer.__dict__,
-            'user':self.user.__dict__,
-            'central':self.central.__dict__}
+        Output::
+        same :: boolean - True if items seem the same
         
-        # loop through all variables
-        original_settings = self.__original_replay_settings()
-        error = self.__loop_compare(original_settings, test_attrs)
-        return error
-    
+        Creates a list of flattened parameters using 
+        the function flattened()
+        
+        This returns most values but Card() remain.
+        Fundamentally, Card() contain the parameters we
+        need to check so an isinstance() and __dict__ rip
+        open each and every Card()'s attributes
+        
+        We then compare sorted lists.
+        """
+        
+        same = False
+        
+        # create unsorted flattened lists for a and b
+        
+        a = [i.__dict__ if 'class' in str(type(i)) else i for i in flatten(a)]
+        b = [i.__dict__ if 'class' in str(type(i)) else i for i in flatten(b)]
+        
+        # must sort the variables to ensure correct comparision
+        a = sorted(a)
+        b = sorted(b)
+        
+        # are both items the same
+        same = (b == a)
+        return same
     def __loop_compare(self, original_settings, test_attrs):
         """combined functionality for initial settings comparision
         
@@ -129,47 +217,10 @@ class Settings(object):
                     self.logger.warning("Items not same. Found {0} in {1}".format(
                         item_name, in_class, attr_is_same))
             else:
-                print "Couldn't find attr: {}".format(item_name)
+                self.logger.warning("Couldn't find attr: {}".format(item_name))
                 error=True
         return error
     
-    def compare_vals(self, a, b):
-        """Compares values from the game
-        
-        Input::
-        a,b :: Iterables - recursive allowed can contain Card()
-        
-        Output::
-        same :: boolean - True if items seem the same
-        
-        Creates a list of flattened parameters using 
-        the function flattened()
-        
-        This returns most values but Card() remain.
-        Fundamentally, Card() contain the parameters we
-        need to check so an isinstance() and __dict__ rip
-        open each and every Card()'s attributes
-        
-        We then compare sorted lists.
-        """
-        
-        same = False
-        
-        # create unsorted flattened lists for a and b
-        
-        a = [i.__dict__ if isinstance(i,Card) else i \
-            for i in flatten(a)]
-        
-        b = [i.__dict__ if isinstance(i,Card) else i \
-            for i in flatten(b)]
-        
-        # must sort the variables to ensure correct comparision
-        a = sorted(a)
-        b = sorted(b)
-        
-        # are both items the same
-        same = (b == a)
-        return same
     def __original_newgame_settings(self):
         """
         Creates an dict.iteritem() of all initial game 
@@ -181,7 +232,20 @@ class Settings(object):
         for item_name,item in self.initial:
             globals()[item_name] = item
         """
-    
+        
+        class __old_Card(object):
+            def __init__(self, name, values=(0, 0), cost=1, clan=None):
+                self.name = name
+                self.cost = cost
+                self.values = values
+                self.clan = clan
+            def __str__(self):
+                        return 'Name %s costing %s with attack %s and money %s' % (self.name, self.cost, self.values[0], self.values[1])
+            def get_attack(self):
+                return self.values[0]
+            def get_money(self):
+                    return self.values[1]
+        
         # Initial settings
         pO = { # User settings
             'name': 'player one',
@@ -209,24 +273,24 @@ class Settings(object):
             'deck': None}
 
         sdc = [ # Central deck cards
-                4 * [Card('Archer', (3, 0), 2)],
-                4 * [Card('Baker', (0, 3), 2)],
-                3 * [Card('Swordsman', (4, 0), 3)],
-                2 * [Card('Knight', (6, 0), 5)],
-                3 * [Card('Tailor', (0, 4), 3)],
-                3 * [Card('Crossbowman', (4, 0), 3)],
-                3 * [Card('Merchant', (0, 5), 4)],
-                4 * [Card('Thug', (2, 0), 1)],
-                4 * [Card('Thief', (1, 1), 1)],
-                2 * [Card('Catapult', (7, 0), 6)],
-                2 * [Card('Caravan', (1, 5), 5)],
-                2 * [Card('Assassin', (5, 0), 4)]
+                4 * [__old_Card('Archer', (3, 0), 2)],
+                4 * [__old_Card('Baker', (0, 3), 2)],
+                3 * [__old_Card('Swordsman', (4, 0), 3)],
+                2 * [__old_Card('Knight', (6, 0), 5)],
+                3 * [__old_Card('Tailor', (0, 4), 3)],
+                3 * [__old_Card('Crossbowman', (4, 0), 3)],
+                3 * [__old_Card('Merchant', (0, 5), 4)],
+                4 * [__old_Card('Thug', (2, 0), 1)],
+                4 * [__old_Card('Thief', (1, 1), 1)],
+                2 * [__old_Card('Catapult', (7, 0), 6)],
+                2 * [__old_Card('Caravan', (1, 5), 5)],
+                2 * [__old_Card('Assassin', (5, 0), 4)]
             ]
 
         # User's deck
         playeronedeck = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]
+            8 * [__old_Card('Serf', (0, 1), 0)],
+            2 * [__old_Card('Squire', (1, 0), 0)]
             ]
 
         # Flatten User deck into one list
@@ -240,8 +304,8 @@ class Settings(object):
 
         # Create User deck (list of lists)
         playertwodeck = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]
+            8 * [__old_Card('Serf', (0, 1), 0)],
+            2 * [__old_Card('Squire', (1, 0), 0)]
             ]
 
         # Flattens PC deck to one list
@@ -254,7 +318,7 @@ class Settings(object):
         pC['active'] = []
 
         # Creating supplements
-        supplement = 10 * [Card('Levy', (1, 2), 2)]
+        supplement = 10 * [__old_Card('Levy', (1, 2), 2)]
 
         # Flatten central deck to one list
         deck = list(itertools.chain.from_iterable(sdc))
@@ -265,133 +329,11 @@ class Settings(object):
         central['supplement'] = supplement
         central['active'] = []
     
-        items = locals()
+        # items = locals()
+        # only want to return pC, pO and central
+        items = {"pC":pC,"pO":pO,"central":central}
         return items
 
-    def __original_replay_settings(self):
-        """
-        Creates an dict.iteritem() of all initial game 
-        parameters.
-    
-        Warning: This will return every item instanced in
-        this function as it uses the local() method
-    
-        for item_name,item in self.initial:
-            globals()[item_name] = item
-        """
-        pO = { # User settings
-            'name': 'player one',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
-    
-        pC = {# PC settings
-            'name': 'player computer',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
-    
-        central = { # Central deck settings
-            'name': 'central',
-            'active': None,
-            'activesize': 5,
-            'supplement': None,
-            'deck': None}
-    
-         # Changes are made in this list
-        sdc = [ # Central deck cards
-            4 * [Card('Archer', (3, 0), 2)],
-            4 * [Card('Baker', (0, 3), 2)],
-            3 * [Card('Swordsman', (4, 0), 3)],
-            2 * [Card('Knight', (6, 0), 5)],
-            3 * [Card('Tailor', (0, 4), 3)],
-            3 * [Card('Crossbowman', (4, 0), 3)],
-            3 * [Card('Merchant', (0, 5), 4)],
-            4 * [Card('Thug', (2, 0), 1)],
-            4 * [Card('Thief', (1, 1), 1)],
-            2 * [Card('Catapault', (7, 0), 6)],
-            2 * [Card('Caravan', (1, 5), 5)],
-            2 * [Card('Assassin', (5, 0), 4)]
-        ]
-    
-        # Changes are made in this list
-        # User's deck
-        playeronedeck = [8 * [Card('Serf', (0, 1), 0)],
-                         2 * [Card('Squire', (1, 0), 0)]
-                    ]
-    
-        # Flatten list to one list
-        pod = list(itertools.chain.from_iterable(playeronedeck))
-    
-        # Initiate new dictionary
-        pO['deck'] = pod
-        pO['hand'] = []
-        pO['discard'] = []
-        pO['active'] = []
-    
-        # Changes are made in this list
-        # Create PC deck (list of lists)
-        playertwodeck = [
-                    8 * [Card('Serf', (0, 1), 0)],
-                    2 * [Card('Squire', (1, 0), 0)]
-        ]
-    
-        # Flatten list of lists
-        ptd = list(itertools.chain.from_iterable(playertwodeck))
-    
-        # Initiate PC deck dictionary
-        pC['deck'] = ptd
-        pC['hand'] = []
-        pC['discard'] = []
-        pC['active'] = []
-    
-        # Creating supplements 
-        supplement = 10 * [Card('Levy', (1, 2), 2)]
-    
-        # Flatten central deck to one list
-        deck = list(itertools.chain.from_iterable(sdc))
-        random.shuffle(deck)
-    
-        # Initiate PC deck dictionary
-        central['deck'] = deck
-        central['supplement'] = supplement
-        central['active'] = []
-    
-        items = locals()
-        return items
-    
-    def __redundant__importing(self):
-        """tests that the class is imported as expected"""
-        
-        # Attempt to obtain a Card object
-        test = Card('Archer', (3, 0), 2)
-        
-        assert type(test).__name__ == 'Card'    # test class importing
-        
-        # get configuration
-        config = GetConfig()
-        # set global variables from config iterable
-        for item_name,item in config.initial:
-            globals()[item_name] = item
-        
-        # test value
-        playeronedeck_test = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]
-            ]
-        
-        # check imported values are the same as expected
-        assert playeronedeck[0][0].__dict__ == playeronedeck_test[0][0].__dict__
-        
-        # will only return if all assertions succeed
-        return True
-        
 
 if __name__ == '__main__':
     test = Settings()

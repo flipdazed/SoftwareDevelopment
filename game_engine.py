@@ -1,8 +1,9 @@
 # This file contains the initial config data
+from logs import *
 import itertools, random
+import inspect
 from functools import wraps
-import logging
-loglevel=logging.INFO
+logger = logging.getLogger(__name__)
 
 # http://stackoverflow.com/a/6307868/4013571
 def wrap_all(decorator):
@@ -27,11 +28,12 @@ def log_me(func):
 class Card(object):
     """Creates the card objects used in game"""
     
-    def __init__(self, name, values=(0, 0), cost=1):
+    def __init__(self, name, attack, money, cost):
         self.name = name
         self.cost = cost
-        self.attack, self.money = values
-        
+        self.attack = attack
+        self.money = money
+    
     def __str__(self):
         return 'Name %s costing %s with attack %s and money %s' \
             % (self.name, self.cost, self.attack, self.money)
@@ -86,6 +88,31 @@ class CommonActions(object):
         for card in player['active']:
             print card
         pass
+    def deck_creator(self, deck_list):
+        """Creates the deck from a list of dictionaries
+    
+        _Input_
+        list of dicts. 
+            dict contents: 
+            "card" : dict containing all **kwargs for Card()
+            "count" : number of cards with these settings to create
+    
+        _Output_
+        list of Card() types
+    
+        Expected input example:
+        [{"count":1, "card":{"name":'Archer', "attack":3, "money":0, "cost":2}},
+        {"count":2, "card":{"name":'Baker', "attack":0, "money":0, "cost":2}}]
+    
+        Expected Output example:
+        [Card('Archer', 3,0,2), Card('Baker', 0,0,2), Card('Baker', 0,0,2)]
+        """
+        deck = [] # get deck ready
+        for card in deck_list:
+            for _ in xrange(card["count"]):
+                # passes the dictionary as a keyword arg (**kwarg)
+                deck.append(Card(**card["params"]))
+        return deck
 
 @wrap_all(log_me)
 class CommonUserActions(object):
@@ -161,58 +188,49 @@ class CommonUserActions(object):
 class Central(CommonActions):
     """The Central Deck Class"""
     
-    def __init__(self):
+    def __init__(self, hand_size, deck_settings, name, supplements):
         """initial settings for the central cards"""
+        
+        # store initial state
+        self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         
         # logging
         self.logger = logging.getLogger(__name__ + ".Central")
-        self.logger.setLevel(loglevel)
         self.logger.debug("Central Created.")
         
         # my name
         self.whoami = 'central'
         
+        self.hand_size = hand_size
+        self.name = name
+        self.deck_settings = deck_settings
+        self.supplement_settings = supplements
+        
         # create newgame paramters
         self.newgame()
-        pass
-    
+        
     
     def newgame(self):
-        self.central = { # Central deck settings
-                'name': 'central',
-                'active': None,
-                'activesize': 5,
-                'supplement': None,
-                'deck': None}
-    
-        self.sdc = [ # Central deck cards
-                4 * [Card('Archer', (3, 0), 2)],
-                4 * [Card('Baker', (0, 3), 2)],
-                3 * [Card('Swordsman', (4, 0), 3)],
-                2 * [Card('Knight', (6, 0), 5)],
-                3 * [Card('Tailor', (0, 4), 3)],
-                3 * [Card('Crossbowman', (4, 0), 3)],
-                3 * [Card('Merchant', (0, 5), 4)],
-                4 * [Card('Thug', (2, 0), 1)],
-                4 * [Card('Thief', (1, 1), 1)],
-                2 * [Card('Catapult', (7, 0), 6)],
-                2 * [Card('Caravan', (1, 5), 5)],
-                2 * [Card('Assassin', (5, 0), 4)]]
         
-        # Creating supplements
-        self.supplement = 10 * [Card('Levy', (1, 2), 2)]
+        self.active = []
         
-        # Flatten central deck to one list
-        self.deck = list(itertools.chain.from_iterable(self.sdc))
+        # revert to initial state
+        for attr, val in self.init.iteritems():
+            setattr(self, attr, val)
+        
+        self.deck = self.deck_creator(self.deck_settings)
+        self.supplements = self.deck_creator(self.supplement_settings)
+        
         random.shuffle(self.deck)
         
-        # Create central deck dictionary
-        self.central['deck'] = self.deck
-        self.central['supplement'] = self.supplement
-        self.central['active'] = []
+        self.central = { # Central deck settings
+                'name': self.name,
+                'active': self.active,
+                'activesize': self.hand_size,
+                'supplement': self.supplements,
+                'deck': self.deck}
+        
         pass
-    
-    
     
     def deck_to_active(self):
         """ moves cards from one item to another"""
@@ -235,50 +253,49 @@ class Central(CommonActions):
 class User(CommonActions, CommonUserActions):
     """The User Class"""
     
-    def __init__(self):
+    def __init__(self, hand_size, deck_settings, name, health):
         """initial settings for the User"""
+        
+        # store initial state
+        self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         
         # logging
         self.logger = logging.getLogger(__name__ + ".User")
-        self.logger.setLevel(loglevel)
         self.logger.debug("User Created.")
         
         # my name
         self.whoami = 'pO'
         
+        self.hand_size = hand_size
+        self.name = name
+        self.health = health
+        self.deck_settings = deck_settings
+        
         # create newgame paramters
         self.newgame()
-        pass
-    
     
     def newgame(self):
-        """initial default settings for the user"""
+        
+        # revert to initial state
+        for attr, val in self.init.iteritems():
+            setattr(self, attr, val)
+        
+        self.active = []
+        self.hand = []
+        self.discard = []
+        
+        self.deck = self.deck_creator(self.deck_settings)
         
         # Initial settings
         self.pO = { # User settings
-            'name': 'player one',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
-        
-        self.playeronedeck = [ # User's deck
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]
-            ]
-        
-        # Flatten User deck into one list
-        self.pod = list(itertools.chain.from_iterable(self.playeronedeck))
-        
-        # Initiate User deck dictionary
-        self.pO['deck'] = self.pod
-        self.pO['hand'] = []
-        self.pO['discard'] = []
-        self.pO['active'] = []
+            'name': self.name,
+            'health': self.health,
+            'deck': self.deck,
+            'hand': self.hand,
+            'active': self.active,
+            'handsize': self.hand_size,
+            'discard': self.discard}
         pass
-    
     
     def print_hand(self):
         """displays the indexed user hand"""
@@ -295,12 +312,20 @@ class User(CommonActions, CommonUserActions):
 class Computer(CommonActions, CommonUserActions):
     """The Computer Player Class"""
     
-    def __init__(self):
+    def __init__(self, hand_size, deck_settings, name, health):
         """initial settings for the computer player"""
+        
+        # store initial state
+        self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
+        
+        # intialise params
+        self.hand_size = hand_size
+        self.name = name
+        self.health = health
+        self.deck_settings = deck_settings
         
         # logging
         self.logger = logging.getLogger(__name__ + ".Computer")
-        self.logger.setLevel(loglevel)
         self.logger.debug("Computer Created.")
         
         # my name
@@ -311,26 +336,24 @@ class Computer(CommonActions, CommonUserActions):
         
     
     def newgame(self):
-        self.pC = { # PC settings
-            'name': 'player computer',
-            'health': 30,
-            'deck': None,
-            'hand': None,
-            'active': None,
-            'handsize': 5,
-            'discard': None}
         
-        # Create User deck (list of lists)
-        self.playertwodeck = [
-            8 * [Card('Serf', (0, 1), 0)],
-            2 * [Card('Squire', (1, 0), 0)]]
-            
-        # Flattens PC deck to one list
-        self.ptd = list(itertools.chain.from_iterable(self.playertwodeck))
+        # revert to initial state
+        for attr, val in self.init.iteritems():
+            setattr(self, attr, val)
         
-        # Initiate PC deck dictionary
-        self.pC['deck'] = self.ptd
-        self.pC['hand'] = []
-        self.pC['discard'] = []
-        self.pC['active'] = []
+        self.active = []
+        self.hand = []
+        self.discard = []
+        
+        self.deck = self.deck_creator(self.deck_settings)
+        
+        # Initial settings
+        self.pC = { # User settings
+            'name': self.name,
+            'health': self.health,
+            'deck': self.deck,
+            'hand': self.hand,
+            'active': self.active,
+            'handsize': self.hand_size,
+            'discard': self.discard}
         pass
