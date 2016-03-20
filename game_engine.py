@@ -113,7 +113,11 @@ class CommonActions(object):
                 # passes the dictionary as a keyword arg (**kwarg)
                 deck.append(Card(**card["params"]))
         return deck
-
+    def the_asserter(self):
+        """I am very certain"""
+        
+        for i in self.
+    
 @wrap_all(log_me)
 class CommonUserActions(object):
     def __init__(self):
@@ -223,6 +227,13 @@ class Central(CommonActions):
         
         random.shuffle(self.deck)
         
+        self.central = { # Central deck settings
+                'name': self.name,
+                'active': self.active,
+                'activesize': self.hand_size,
+                'supplement': self.supplements,
+                'deck': self.deck}
+        
         pass
     
     def deck_to_active(self):
@@ -279,6 +290,15 @@ class User(CommonActions, CommonUserActions):
         
         self.deck = self.deck_creator(self.deck_settings)
         
+        # Initial settings
+        self.pO = { # User settings
+            'name': self.name,
+            'health': self.health,
+            'deck': self.deck,
+            'hand': self.hand,
+            'active': self.active,
+            'handsize': self.hand_size,
+            'discard': self.discard}
         pass
     
     def print_hand(self):
@@ -331,4 +351,13 @@ class Computer(CommonActions, CommonUserActions):
         
         self.deck = self.deck_creator(self.deck_settings)
         
+        # Initial settings
+        self.pC = { # User settings
+            'name': self.name,
+            'health': self.health,
+            'deck': self.deck,
+            'hand': self.hand,
+            'active': self.active,
+            'handsize': self.hand_size,
+            'discard': self.discard}
         pass
