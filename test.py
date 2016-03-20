@@ -4,7 +4,6 @@
 # This is a python testing file
 import config
 import game_engine
-from game_engine import Card
 from logs import *
 
 import itertools, random
@@ -18,13 +17,15 @@ def flatten(l):
                 yield sub
         else:
             yield el
-class CommonTest(object):
+
+class __CommonTest__(object):
     def __init__(self):
         pass
     def run_tests(self, tests, display=True):
         """Runs all functions"""
         
-        self.logger.info("Begin Testing Cycle\n")
+        self.logger.info("Begin Testing Cycle")
+        self.logger.info("")
         # loop through all functions
         # and get results - store in a dictionary
         # prints out if display=True
@@ -39,7 +40,90 @@ class CommonTest(object):
             else:
                 self.logger.info("Test Passed: {}".format(func_name))
         pass
-class Settings(CommonTest):
+
+class ParentChild(__CommonTest__):
+    def __init__(self):
+        
+        # # creates a logger for the test file
+        get_logger(self)
+        
+        self.game = game_engine.Gameplay()
+        
+        self.game.user = self.game.User(**config.defaults['user'])
+        self.game.computer = self.game.Computer(**config.defaults['computer'])
+        self.game.central = self.game.Central(**config.defaults['central'])
+        
+        # runs all tests
+        tests = [
+            "access_parent_attrs",
+            "access_sibling_attrs"
+            ]
+        
+        self.run_tests(tests)
+        
+        pass
+    
+    def access_sibling_attrs(self):
+        """This tests if the classes can access attributes in the parent"""
+        error = False
+        actual_val = "KAPOW!"
+        # list of test cases
+        actors = ['user', 'computer', 'central']
+        
+        # iterate through instances of the children
+        for actor in actors:
+            instance = getattr(self.game, actor)             # create an instance of the child
+            instance_parent = getattr(instance, 'parent') # create a parent instance
+            
+            # comapre against all others that != to current
+            siblings = [a for a in actors if a != actor]
+            for sibling in siblings: # iterate through all siblings
+                
+                test_instance = getattr(self.game, sibling)     # create sibling instance
+                test_instance.test_value = actual_val           # create test value in sibling
+                
+                if hasattr(instance_parent, sibling):               # check that test_actor
+                    sibling_instance = getattr(instance_parent, sibling)   # create sibling instance exists
+                    self.logger.debug("Found sibling: {}".format(sibling))
+                    
+                    test_val =sibling_instance.test_value # get test_value
+                    if test_val == actual_val:   # check that sibling value is as expected
+                        self.logger.debug("Test value equal.")
+                    else:
+                        self.logger.warning("Values not equal (actual:{}, test:{})".format(actual_val, test_val))
+                        error=True
+                else:
+                    self.logger.warning("Couldn't find sibling: self.{}.parent.{}".format(actor, sibling))
+                    error=True
+        return error
+    
+    def access_parent_attrs(self):
+        """This tests if the classes can access attributes in the parent"""
+        error = False
+        actual_val = "KAPOW!"
+        self.game.test_value = actual_val
+        
+        actors = ['user', 'computer', 'central']
+        
+        for actor in actors:
+            instance = getattr(self.game, actor)
+            if hasattr(instance, 'parent'): # check that parent.test_value exists
+                self.logger.debug("Found parent in {}".format(actor))
+                
+                test_val = self.game.user.parent.test_value # access text_value
+                if test_val == actual_val: # caompre values
+                    self.logger.debug("Test value equal.")
+                else: # values not equal
+                    error = True
+                    self.logger.warning("Test values not equal (actual: {} vs. parent: {})".format(
+                            actual_val,test_val))
+            else: # couldnt find parent.test_value
+                error=True
+                self.logger.warning("Did not find parent in {}".format(actor))
+                
+        return error
+    
+class Settings(__CommonTest__):
     """This contains the tests related to the game settings"""
     def __init__(self):
         """run tests"""
@@ -48,9 +132,10 @@ class Settings(CommonTest):
         get_logger(self)
         
         # create classes of users and central deck
-        self.central = game_engine.Central(**config.defaults['central'])
-        self.user = game_engine.User(**config.defaults['user'])
-        self.computer = game_engine.Computer(**config.defaults['computer'])
+        self.game = game_engine.Gameplay()
+        self.central = self.game.Central(**config.defaults['central'])
+        self.user = self.game.User(**config.defaults['user'])
+        self.computer = self.game.Computer(**config.defaults['computer'])
         
         # runs all tests
         tests = [
@@ -364,18 +449,18 @@ class Settings(CommonTest):
 
 
 
-class Gameplay(CommonTest):
+class Gameplay(__CommonTest__):
     """Tests gameplay"""
     def __init__(self):
         """run tests"""
         
         # # creates a logger for the test file
         get_logger(self)
-        
+        self.game = game_engine.Gameplay()
         # create classes of users and central deck
-        self.central = game_engine.Central(**config.defaults['central'])
-        self.user = game_engine.User(**config.defaults['user'])
-        self.computer = game_engine.Computer(**config.defaults['computer'])
+        self.central = self.game.Central(**config.defaults['central'])
+        self.user = self.game.User(**config.defaults['user'])
+        self.computer = self.game.Computer(**config.defaults['computer'])
         
         # runs all tests
         tests = [
@@ -401,3 +486,4 @@ class Gameplay(CommonTest):
 if __name__ == '__main__':
     settings = Settings()
     test = Gameplay()
+    children = ParentChild()

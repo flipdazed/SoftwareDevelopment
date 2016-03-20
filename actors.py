@@ -11,8 +11,9 @@ from common import *
 class Central(CommonActions):
     """The Central Deck Class"""
     
-    def __init__(self, hand_size, deck_settings, name, supplements):
+    def __init__(self, parent, hand_size, deck_settings, name, supplements):
         """initial settings for the central cards"""
+        self.parent = parent
         
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
@@ -82,8 +83,9 @@ class Central(CommonActions):
 class User(CommonActions, CommonUserActions):
     """The User Class"""
     
-    def __init__(self, hand_size, deck_settings, name, health):
+    def __init__(self, parent, hand_size, deck_settings, name, health):
         """initial settings for the User"""
+        self.parent = parent
         
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
@@ -106,6 +108,7 @@ class User(CommonActions, CommonUserActions):
         self.logger.game("")
         self.logger.game("Your Hand")
         self._print_cards(self.hand, index=True)
+        
         pass
     def turn(self, central, computer):
         """Contains the User Actions UI"""
@@ -286,9 +289,9 @@ class User(CommonActions, CommonUserActions):
 class Computer(CommonActions, CommonUserActions):
     """The Computer Player Class"""
     
-    def __init__(self, hand_size, deck_settings, name, health):
+    def __init__(self, parent, hand_size, deck_settings, name, health):
         """initial settings for the computer player"""
-        
+        self.parent = parent
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         

@@ -14,14 +14,19 @@ class Gameplay(object):
     """Gameplay Class"""
     def __init__(self):
         
+        self.User = lambda hand_size, deck_settings, name, health: \
+            User(self, hand_size, deck_settings, name, health)
+        self.Computer = lambda hand_size, deck_settings, name, health: \
+            Computer(self, hand_size, deck_settings, name, health)
+        self.Central = lambda hand_size, deck_settings, name, supplements: \
+            Central(self, hand_size, deck_settings, name, supplements)
+        
         # logging
         get_logger(self)
         
-        # my name
-        self.whoami = 'game'
         pass
     
-    def end(self, user, computer, central):
+    def end(self):
         """Checks for end game conditions"""
         end_game = False
         
@@ -35,38 +40,38 @@ class Gameplay(object):
             pass
         
         # end_game = False flags the end of a game
-        if user.health <= 0:   # User has died
-            log_death(self, user)
+        if self.user.health <= 0:   # User has died
+            log_death(self, self.user)
             end_game = True
-            self.logger.game("{} wins".format(user.name))
+            self.logger.game("{} wins".format(self.user.name))
         
-        elif computer.health <= 0: # PC has died
-            log_death(self, computer)
+        elif self.computer.health <= 0: # PC has died
+            log_death(self, self.computer)
             end_game = True
-            self.logger.game("{} wins".format(computer.name))
+            self.logger.game("{} wins".format(self.computer.name))
             
-        elif central.hand_size == 0: # Game ends if size of active deck is zero
-            self.logger.debug("Central Hand is zero (hand size:{})".format(central.hand_size))
+        elif self.central.hand_size == 0: # Game ends if size of active deck is zero
+            self.logger.debug("Central Hand is zero (hand size:{})".format(self.central.hand_size))
             self.logger.game("")
-            self.logger.game("No more cards available...".format(user.name))
+            self.logger.game("No more cards available...".format(self.user.name))
             
-            if user.health > computer.health:
-                self.logger.game("{} Wins on Health".format(user.name))
-                log_health_comp(self, user, computer)
-            elif computer.health > user.health:
-                self.logger.game("{} Wins on Health".format(computer.name))
-                log_health_comp(self, user, computer)
+            if self.user.health > self.computer.health:
+                self.logger.game("{} Wins on Health".format(self.user.name))
+                log_health_comp(self, self.user, self.computer)
+            elif self.computer.health > self.user.health:
+                self.logger.game("{} Wins on Health".format(self.computer.name))
+                log_health_comp(self, self.user, self.computer)
             else: # No clear winner
-                log_health_comp(self, user, computer, equal=True)
+                log_health_comp(self, self.user, self.computer, equal=True)
                 self.logger.game("It is a Draw!")
             end_game = False
         else:
             self.logger.debug("Player are both healthy: ({} health:{}, {} health:{})".format(
-                user.name, user.health,computer.name, computer.health))
-            self.logger.debug("Central Hand size is not zero (hand size:{})".format(central.hand_size))
+                self.user.name, self.user.health,self.computer.name, self.computer.health))
+            self.logger.debug("Central Hand size is not zero (hand size:{})".format(self.central.hand_size))
         return end_game
     
-    def replay(self, user, computer, central):
+    def replay(self):
         """Asks User if they want to replay"""
         
         self.logger.game("Do you want to play another game?")
@@ -82,23 +87,23 @@ class Gameplay(object):
             aggressive = (iopponent_type=='A')
             
             # call the replay game settings
-            user.newgame()
-            computer.newgame()
-            central.newgame()
+            self.user.newgame()
+            self.computer.newgame()
+            self.central.newgame()
             
-            # Move cards from central.central deck 
-            # to active central.central deck
-            central.deck_to_active()
+            # Move cards from self.central.central deck 
+            # to active self.central.central deck
+            self.central.deck_to_active()
             
             # Move cards from User deck to User's hand
-            user.deck_to_hand()
+            self.user.deck_to_hand()
             
             # Move cards from PC deck to PC's hand
-            computer.deck_to_hand()
+            self.computer.deck_to_hand()
             
-            # Display central.central cards state
-            central.print_active_cards()
-            central.print_supplements()
+            # Display self.central.central cards state
+            self.central.print_active_cards()
+            self.central.print_supplements()
         return continue_game
     def exit(self):
         """Friendly exit"""
