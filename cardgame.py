@@ -43,7 +43,7 @@ def main(game):
         
         #### Start User Turn ####
         logger.debug("Start User Turn...")
-        game.user.turn(game.central, game.computer)
+        game.user.turn()
         logger.debug("End User Turn.")
         #### End User Turn ####
         
@@ -57,7 +57,7 @@ def main(game):
         
         #### Start PC Turn ####
         logger.debug("Starting Computer Turn...")
-        game.computer.turn(game.central, game.user)
+        game.computer.turn()
         logger.debug("End Computer Turn...")
         #### End PC Turn ####
         
