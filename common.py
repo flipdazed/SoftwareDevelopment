@@ -130,12 +130,7 @@ class CommonUserActions(object):
             card = self.hand.pop()
             self.active.append(card)
             self.logger.debug("Iteration #{}: Drawn {} from deck and added to active deck".format(i,card.name))
-            
-            new_money = self.money + card.get_money()
-            new_attack = self.attack + card.get_attack()
-            self.logger.debug("Money:{}+{}    Attack:{}+{}".format(self.money, new_money, self.attack, new_attack))
-            self.money = new_money
-            self.attack = new_attack
+            self.__add_values_to_total(card)
         pass
     
     def play_a_card(self, card_number):
@@ -152,13 +147,17 @@ class CommonUserActions(object):
         self.active.append(card)
         self.logger.debug("Iteration #{}: Drawn {} from deck and added to active deck".format(i,card.name))
                 
-        new_money = self.money + card.get_money()
-        new_attack = self.attack + card.get_attack()
-        self.logger.debug("Money:{}+{}    Attack:{}+{}".format(self.money, new_money, self.attack, new_attack))
-        self.money = new_money
-        self.attack = new_attack
+        self.__add_values_to_total(card)
         pass
-    
+    def __add_values_to_total(self, card):
+        """Adds money and attack to total"""
+        
+        money_i = card.get_money()
+        attack_i = card.get_attack()
+        self.logger.debug("Money:{}+{}    Attack:{}+{}".format(self.money, money_i, self.attack, attack_i))
+        self.money += money_i
+        self.attack += attack_i
+        pass
     def discard_hand(self):
         """If there are cards in the hand add to discard pile"""
         if (len(self.hand) > 0 ):

@@ -33,8 +33,9 @@ def main(game):
     
     if not continue_game: game.exit()
      
-    iopponent_type = raw_input("Do you want an aggressive (A) opponent or an greedy (G) opponent").upper()
+    iopponent_type = raw_input("Do you want an Aggressive (A) opponent or an Greedy (G) opponent").upper()
     computer.aggressive = (iopponent_type=='A')
+    logger.debug("Computer mode set to {}".format("Aggressive" if computer.aggressive else "Greedy"))
     
     # Each loop is a new round in the game
     # User goes first followed by PC
@@ -87,5 +88,5 @@ if __name__ == '__main__':
     try:
         main(game)
     except KeyboardInterrupt:
-        game.save_exit()
+        game.hostile_exit()
     pass
