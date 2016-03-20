@@ -59,12 +59,96 @@ class Gameplay(CommonGamePlayLoggers):
             Computer(self, hand_size, deck_settings, name, health)
         self.Central = lambda hand_size, deck_settings, name, supplements: \
             Central(self, hand_size, deck_settings, name, supplements)
-        
+            
         # logging
         get_logger(self)
         
         pass
+    def configure(self, defaults):
+        """configure the game settings
+        Relies on the defaults settings being in an expected format
+        
+        minimal example below of expected input:
+        
+        defaults = {
+            "central":{
+                "name":'Central', #"Central",
+                "hand_size":5,
+                "deck_settings":[ # Central deck paramss
+                    {"count":4 ,"params":{"name":'Archer', "attack":3, "money":0, "cost":2}},
+                    ]
+                ,"supplements": 
+                    [{"count":10 ,"params":{"name":'Levy', "attack":1, "money":2, "cost":2}}]
+                }
+            ,"user":{
+                "name":'Lord Vadar',  #"Player One",
+                "health":30,
+                "hand_size":5,
+                "deck_settings":[ # User's deck
+                    {"count":8 ,"params":{"name":'Serf', "attack":0, "money":1, "cost":0}},
+                    ]
+                }
+            ,"computer":{
+                "name": 'Computer', #"Computer Player",
+                "health":30,
+                "hand_size":5,
+                "deck_settings":[ # computer deck
+                    {"count":8 ,"params":{"name":'Serf', "attack":0, "money":1, "cost":0}},
+                    ]
+                }
+            }
+        """
+        
+        self.user = self.User(**defaults['user'])
+        self.computer = self.Computer(**defaults['computer'])
+        self.central = self.Central(**defaults['central'])
+        
+        # players to iterate
+        self.actors = ["user", "computer"]
+        pass
     
+    def play(self):
+        """the main game loop continues while
+        self.continue_game is True"""
+        
+        self.continue_game = True
+        
+        while self.continue_game:
+            logger.debug("Starting New Round")
+            self.continue_game = self.next_round()
+        
+        pass
+    def next_round(self):
+        """Iterate for each round of the game
+        
+        Returns a variable determining if the game should continue
+        This relies on a list defines in __init__()
+        that contains the user and computer definitions
+        """
+        # User goes first followed by PC
+        for actor in self.actors: # iterate the players
+            # Check for end of game
+            logger.debug("Checking End Game Conditions...")
+            if self.end(): # True if end game conditions are met
+            
+                # Asking user if they want to replay
+                logger.debug("Starting Replay...")
+                self.continue_game = self.replay()
+            else:
+            
+                #### Start User Turn ####
+                player = getattr(self, actor) # well pleased with this
+                logger.debug("Start {} Turn...".format(player.name))
+                player.turn()
+                logger.debug("End {} Turn.".format(player.name))
+                #### End User Turn ####
+        
+                # display active deck and supplements
+                self.central.display_all_active()
+        
+                # Display health state
+                self.display_health_status()
+        return self.continue_game
     def end(self):
         """Checks for end game conditions"""
         end_game = False
@@ -112,18 +196,22 @@ class Gameplay(CommonGamePlayLoggers):
             self.setup_game()
             
         return continue_game
-    def exit(self):
-        """Friendly exit"""
-        self.logger.game("")
-        self.logger.game("Hope to see you again soon. Goodbye :)") 
-        sys.exit() # Terminate
-        pass
-    def hostile_exit(self):
-        """UnFriendly exit"""
-        self.logger.game("")
-        self.logger.game("")
-        self.logger.game("Sad to see you leave so quickly. Please return soon! :)")
-        sys.exit() # Terminate
+    def new(self):
+        """starts the new game sequence"""
+        
+        self.logger.game("Do you want to play a game?")
+        iplay_game = raw_input().upper()
+        
+        continue_game = (iplay_game=='Y')
+        if not continue_game: self.exit()
+        
+        self.logger.game("Do you want an Aggressive (A) opponent or an Greedy (G) opponent")
+        iopponent_type = raw_input().upper()
+        
+        self.computer.aggressive = (iopponent_type=='A') # store opponent type
+        self.logger.debug("Computer mode set to {}".format("Aggressive" if self.computer.aggressive else "Greedy"))
+        
+        self.setup_game()
         pass
     def setup_game(self):
         """stores routines to set up a new game"""
@@ -145,6 +233,19 @@ class Gameplay(CommonGamePlayLoggers):
         # Display self.central.central cards state
         self.central.print_active_cards()
         self.central.print_supplements()
+        pass
+    def exit(self):
+        """Friendly exit"""
+        self.logger.game("")
+        self.logger.game("Hope to see you again soon. Goodbye :)") 
+        sys.exit() # Terminate
+        pass
+    def hostile_exit(self):
+        """UnFriendly exit"""
+        self.logger.game("")
+        self.logger.game("")
+        self.logger.game("Sad to see you leave so quickly. Please return soon! :)")
+        sys.exit() # Terminate
         pass
     def display_health_status(self):
         """Displays the health of both players"""
