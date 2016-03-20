@@ -18,30 +18,9 @@ def flatten(l):
                 yield sub
         else:
             yield el
-
-class Settings(object):
-    """This contains the tests related to the game settings"""
+class CommonTest(object):
     def __init__(self):
-        """run tests"""
-        
-        # creates a logger for the test file
-        self.logger = logging.getLogger(__name__+".Settings")
-        self.logger.info('Logger started.')
-        
-        # create classes of users and central deck
-        self.engine = game_engine.Central(**config.defaults['engine'])
-        self.user = game_engine.User(**config.defaults['user'])
-        self.computer = game_engine.Computer(**config.defaults['computer'])
-        
-        # runs all tests
-        tests = [
-            "newgame_settings",
-            "deck_creator"
-            ]
-        
-        self.run_tests(tests)
         pass
-    
     def run_tests(self, tests, display=True):
         """Runs all functions"""
         
@@ -59,8 +38,30 @@ class Settings(object):
                 self.logger.error("Test Failed: {}".format(func_name)) 
             else:
                 self.logger.info("Test Passed: {}".format(func_name))
-        
         pass
+class Settings(CommonTest):
+    """This contains the tests related to the game settings"""
+    def __init__(self):
+        """run tests"""
+        
+        # creates a logger for the test file
+        self.logger = logging.getLogger(__name__+".Settings")
+        self.logger.info('Logger started.')
+        
+        # create classes of users and central deck
+        self.central = game_engine.Central(**config.defaults['central'])
+        self.user = game_engine.User(**config.defaults['user'])
+        self.computer = game_engine.Computer(**config.defaults['computer'])
+        
+        # runs all tests
+        tests = [
+            "newgame_settings",
+            "deck_creator"
+            ]
+        
+        self.run_tests(tests)
+        pass
+    
     
     def deck_creator(self):
         """Tests the deck creator can correctly create Card() classes"""
@@ -134,14 +135,14 @@ class Settings(object):
         
         self.computer.newgame()
         self.user.newgame()
-        self.engine.newgame()
+        self.central.newgame()
         
         central = { # Central deck settings
-                'name': self.engine.name,
-                'active': self.engine.active,
-                'activesize': self.engine.hand_size,
-                'supplement': self.engine.supplements,
-                'deck': self.engine.deck}
+                'name': self.central.name,
+                'active': self.central.active,
+                'activesize': self.central.hand_size,
+                'supplement': self.central.supplements,
+                'deck': self.central.deck}
         # Initial settings
         pO = { # User settings
             'name': self.user.name,
@@ -149,7 +150,7 @@ class Settings(object):
             'deck': self.user.deck,
             'hand': self.user.hand,
             'active': self.user.active,
-            'handsize': self.user.hand_size,
+            'hand_size': self.user.hand_size,
             'discard': self.user.discard}
         
         # Initial settings
@@ -159,7 +160,7 @@ class Settings(object):
             'deck': self.computer.deck,
             'hand': self.computer.hand,
             'active': self.computer.active,
-            'handsize': self.computer.hand_size,
+            'hand_size': self.computer.hand_size,
             'discard': self.computer.discard}
         
         test_attrs = {
@@ -281,7 +282,7 @@ class Settings(object):
             'deck': None,
             'hand': None,
             'active': None,
-            'handsize': 5,
+            'hand_size': 5,
             'discard': None}
 
         pC = { # PC settings
@@ -290,7 +291,7 @@ class Settings(object):
             'deck': None,
             'hand': None,
             'active': None,
-            'handsize': 5,
+            'hand_size': 5,
             'discard': None}
 
         central = { # Central deck settings
@@ -363,5 +364,42 @@ class Settings(object):
         return items
 
 
+
+class Gameplay(CommonTest):
+    """Tests gameplay"""
+    def __init__(self):
+        """run tests"""
+        
+        # creates a logger for the test file
+        self.logger = logging.getLogger(__name__+".Gameplay")
+        self.logger.info('Logger started.')
+        
+        # create classes of users and central deck
+        self.central = game_engine.Central(**config.defaults['central'])
+        self.user = game_engine.User(**config.defaults['user'])
+        self.computer = game_engine.Computer(**config.defaults['computer'])
+        
+        # runs all tests
+        tests = [
+            "object_interaction"
+            ]
+        
+        self.run_tests(tests)
+        pass
+    
+    def object_interaction(self):
+        """testing that classes can interact"""
+        
+        def fn(class_input):
+            """test fn"""
+            class_input.deck = "test item"
+            pass
+        
+        self.central.test_param = "LOLCANO"
+        self.user.test_fn = fn
+        
+        error = (self.central.test_param != "LOLCANO")
+        return error
 if __name__ == '__main__':
-    test = Settings()
+    settings = Settings()
+    test = Gameplay()

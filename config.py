@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 logger.debug("imported configurations")
 
 defaults = {
-    "engine":{
-        "name":'central', #"Central",
+    "central":{
+        "name":'Central', #"Central",
         "hand_size":5,
         "deck_settings":[ # Central deck paramss
             {"count":4 ,"params":{"name":'Archer', "attack":3, "money":0, "cost":2}},
@@ -28,7 +28,7 @@ defaults = {
             [{"count":10 ,"params":{"name":'Levy', "attack":1, "money":2, "cost":2}}]
         }
     ,"user":{
-        "name":'player one',  #"Player One",
+        "name":'Lord Vadar',  #"Player One",
         "health":30,
         "hand_size":5,
         "deck_settings":[ # User's deck
@@ -37,7 +37,7 @@ defaults = {
             ]
         }
     ,"computer":{
-        "name": 'player computer', #"Computer Player",
+        "name": 'Computer', #"Computer Player",
         "health":30,
         "hand_size":5,
         "deck_settings":[ # computer deck
