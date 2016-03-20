@@ -127,7 +127,7 @@ class CommonUserActions(object):
         pass
     def end_turn(self):
         """Ends the turn of the user"""
-        
+        self.logger.debug("Ending Turn: {}".format(self.name))
         # If player has cards in the hand add to discard pile
         self.discard_hand()
         
@@ -210,4 +210,26 @@ class CommonUserActions(object):
         # creates an attribute based on the class
         
         self.logger.game("{} Health {}".format(self.name,self.health))
-        pass 
+        pass
+        
+    def attack_player(self, other_player):
+        """ Attack another player
+        other_player expected input is a class
+        that corresponds to another sibling player
+        an example of this from self = game.User() would be:
+            self.attack(self.parent.computer)
+        which would attack the computer form the player
+        """
+        
+        self.logger.debug("{0} Attacking {1} with strength {2}".format(self.name, other_player.name, self.attack))
+        self.logger.debug("{0} Health before attack: {1}".format(other_player.name, other_player.health))
+        other_player.health -= self.attack
+        self.attack = 0
+        self.logger.debug("{0} Attack: {1}".format(self.name, self.attack))
+        pass
+    def reset_vals(self):
+        """resets money and attack"""
+        self.logger.debug("Money and Attack set to 0 for {}".format(self.name))
+        self.money = 0
+        self.attack = 0
+        pass

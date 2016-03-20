@@ -10,20 +10,6 @@ from config import defaults
 def main(game):
     """Main loop to allow error handling"""
     
-    # Move cards from game.central.central deck 
-    # to active game.central.central deck
-    game.central.deck_to_active()
-    
-    # Move cards from User deck to User's hand
-    game.user.deck_to_hand()
-    
-    # Move cards from PC deck to PC's hand
-    game.computer.deck_to_hand()
-    
-    # Display game.central.central cards state
-    game.central.print_active_cards()
-    game.central.print_supplements()
-    
     # Starting the game
     logger.game("Do you want to play a game?")
     iplay_game = raw_input().upper()
@@ -35,6 +21,8 @@ def main(game):
     iopponent_type = raw_input().upper()
     game.computer.aggressive = (iopponent_type=='A')
     logger.debug("Computer mode set to {}".format("Aggressive" if game.computer.aggressive else "Greedy"))
+    
+    game.setup_game()
     
     # Each loop is a new round in the game
     # User goes first followed by PC

@@ -151,8 +151,7 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
         """Contains the User Actions UI"""
         # iterators to count self.money
         # and attack in players' hands
-        self.money = 0
-        self.attack = 0
+        self.reset_vals() # resetes money / attack
         
         while True: # User's Turn
             
@@ -178,138 +177,165 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
                     # transfer all cards from hand to active
                     # add values in hand to current totals
                     self.play_all_cards()
+                else: # there are no cards in the user's hand
+                    self.logger.game("There are no cards currently in your hand to play!")
+                    self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
                 
-                # Display User hand
-                self.print_hand()
-                
-                # Display User active cards
-                self.print_active_cards()
-                
-                # Display PC state
-                self.display_values()
-            
+                self.__show_updated_user_state()
+                    
             elif iuser_action.isdigit():   # Play a specific card
+                
                 self.logger.debug("Play a single card action selected (input: {}) ...".format(iuser_action))
                 
+                # check the card number is valid
                 if int(iuser_action) in xrange(0, len(self.hand)):
                     self.logger.debug("{} is a valid card number.".format(int(iuser_action)))
                     self.play_a_card(card_number=iuser_action)
+                elif len(self.hand) == 0:
+                    self.logger.game("There are no cards currently in your hand to play!")
+                else:
+                    self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 
-                # Display User hand
-                self.print_hand()
+                self.__show_updated_user_state()
                 
-                # Display User active cards
-                self.print_active_cards()
-                
-                # Display PC state
-                self.display_values()
-            
             elif (iuser_action == 'B'):    # Buy cards
                 self.logger.debug("Buy Cards action selected (input: {}) ...".format(iuser_action))
+                self.card_shop() # go to the shop to buy cards
                 
-                # Check player has self.money available
-                while self.money > 0: # no warning of no self.money
-                    self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
-                    
-                    # Display central.central cards state
-                    self.parent.central.print_active_cards(index=True)
-                    
-                    # User chooses a card to purchase
-                    self.logger.game("")
-                    self.logger.game("Choose a card to buy [0-n], S for supplement, E to end buying")
-                    self.logger.game("Choose option: ")
-                    ibuy_input = raw_input().upper()
-                    self.logger.debug("User Input: {}".format(ibuy_input))
-                    
-                    # Evaluate choice
-                    if ibuy_input == 'S': # Buy a supplement
-                        self.logger.debug("Buy supplement action selected (input: {}) ...".format(ibuy_input))
-                        if len(self.parent.central.supplements) > 0: # If supplements exist
-                            self.logger.debug("Supplements Detected by Computer")
-                            purchase_card = self.parent.central.supplements[0]
-                            
-                            # Buy if player has enough self.money
-                            # Move to player's discard pile
-                            if self.money >= purchase_card.cost:
-                                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
-                                
-                                card = self.parent.central.supplements.pop()
-                                self.discard.append(card)
-                                
-                                new_money = - card.cost
-                                self.logger_buy_card(card, self.money, new_money)
-                                self.money += new_money
-                                self.logger.game("Supplement Bought")
-                            else:
-                                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-                                self.logger.game("Insufficient money to buy")
-                        else:
-                            self.logger.debug("No Supplements available")
-                            self.logger.game("No Supplements left")
-                    
-                    elif ibuy_input.isdigit(): # Buy a card
-                        self.logger.debug("Buy card {0} action selected (input: {0}) ...".format(ibuy_input))
-                        
-                        if int(ibuy_input) in xrange(0,len(self.parent.central.active)): # If card exists
-                             self.logger.debug("{} is a valid card number.".format(int(ibuy_input)))
-                             
-                             # Buy if User has enough self.money
-                             # Move directly to discard pile
-                             purchase_card = self.parent.central.active[int(ibuy_input)]
-                             if self.money >= purchase_card.cost:
-                                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
-                                
-                                card = self.parent.central.active.pop(int(ibuy_input))
-                                self.discard.append(card)
-                                
-                                new_money = - card.cost
-                                self.logger_buy_card(card, self.money, new_money)
-                                self.money += new_money
-                                
-                                # Refill active from self.parent.central.central deck
-                                # if there are cards in self.parent.central.central
-                                self.logger.debug("Attempting to refill card central active deck from central deck...")
-                                if len(self.parent.central.deck) > 0:
-                                    self.logger.debug("{} cards in central deck".format(len(self.parent.central.deck)))
-                                    card = self.parent.central.deck.pop()
-                                    self.parent.central.active.append(card)
-                                    self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
-                                else:
-                                    # If no cards in self.parent.central.central deck,
-                                    # reduce activesize by 1
-                                    self.logger.debug("No cards in central deck to refill central active deck.")
-                                    self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
-                                    self.parent.central.hand_size -= 1
-                                
-                                self.logger.game("Card bought")
-                             else:
-                                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-                                self.logger.game("Insufficient money to buy")
-                        else:
-                            self.logger.debug("{} is not valid card number for card for range:0-{}".format(int(ibuy_input),len(self.parent.central.active)))
-                            self.logger.game("Enter a valid index number")
-                    elif ibuy_input == 'E': # User ends shopping spree
-                        self.logger.debug("End buying action selected (input: {}) ...".format(ibuy_input))
-                        break
-                    else:
-                        self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
-                        self.logger.game("Enter a valid option")
-            
             elif iuser_action == 'A':      # Attack
                 self.logger.debug("Attack action selected (input: {}) ...".format(iuser_action))
-                
-                self.logger.debug("{} Health before attack: {}".format(self.parent.computer.name, self.parent.computer.health))
-                self.parent.computer.health -= self.attack
-                self.attack = 0
-                self.logger.debug("{} Attack: {}".format(self.name, self.attack))
+                self.attack_player(self.parent.computer)
             
             elif iuser_action == 'E':      # Ends turn
                 self.logger.debug("End Turn action selected (input: {}) ...".format(iuser_action))
                 break
             else:
+                self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 self.logger.debug("No action matched to input (input: {}) ...".format(iuser_action))
-            
+        
+        # ends turn and prints debug message
         self.end_turn()
+        pass
+    def card_shop(self):
+        """contains the shop for buying cards"""
+        # Check player has self.money available
+        
+        while self.money > 0: # no warning of no self.money
+            self.logger.game("Current money: {}".format(self.money))
+            self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
+            
+            # Display central.central cards state
+            self.parent.central.print_active_cards(index=True)
+            
+            # User chooses a card to purchase
+            self.logger.game("")
+            self.logger.game("Choose a card to buy [0-n], S for supplement, E to end buying")
+            self.logger.game("Choose option: ")
+            ibuy_input = raw_input().upper()
+            
+            self.logger.debug("User Input: {}".format(ibuy_input))
+            
+            if ibuy_input.isdigit() or ibuy_input == 'S': # users attempts to purcahse a card
+                self.purchase_cards(ibuy_input)
+            
+            elif ibuy_input == 'E': # User ends shopping spree
+                self.logger.debug("End buying action selected (input: {}) ...".format(ibuy_input))
+                break
+            
+            else: # cycle the shopping loop
+                self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
+                self.logger.game("'{}' is not a valid option. Please try again.".format(ibuy_input))
+        
+        thrown_out = "Unfortunately you have no remaining money: "
+        thrown_out += "You have been thrown out of the shop.".format(self.money)
+        self.logger.game(thrown_out)
+        pass
+    def purchase_cards(self, ibuy_input):
+        """User purchases cards"""
+        # Evaluate choice
+        if ibuy_input == 'S': # Buy a supplement
+            self.logger.debug("Buy supplement action selected (input: {}) ...".format(ibuy_input))
+            self.buy_supplement() # buys a supplement subject to conditions - see function
+        
+        elif ibuy_input.isdigit(): # Buy a card
+            self.logger.debug("Buy card {0} action selected (input: {0}) ...".format(ibuy_input))
+            
+            if int(ibuy_input) in xrange(0,len(self.parent.central.active)): # If card exists
+                self.logger.debug("{} is a valid card number.".format(int(ibuy_input)))
+                self.buy_card_by_index(ibuy_input)
+            else:
+                self.logger.debug("{} is not valid card number for card for range:0-{}".format(int(ibuy_input),len(self.parent.central.active)))
+                self.logger.game("Enter a valid index number")
+        pass
+    def buy_card_by_index(self, ibuy_input):
+        """buys a particular card by index
+        it is assumed that an evaluation has already been made to assess
+        that the index is valid
+        """
+        # Buy if User has enough self.money
+        # Move directly to discard pile
+        purchase_card = self.parent.central.active[int(ibuy_input)]
+        if self.money >= purchase_card.cost:
+           self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
+           
+           card = self.parent.central.active.pop(int(ibuy_input))
+           self.discard.append(card)
+           
+           new_money = - card.cost
+           self.logger_buy_card(card, self.money, new_money)
+           self.money += new_money
+           
+           # Refill active from self.parent.central.central deck
+           # if there are cards in self.parent.central.central
+           self.logger.debug("Attempting to refill card central active deck from central deck...")
+           if len(self.parent.central.deck) > 0:
+               self.logger.debug("{} cards in central deck".format(len(self.parent.central.deck)))
+               card = self.parent.central.deck.pop()
+               self.parent.central.active.append(card)
+               self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
+           else:
+               # If no cards in self.parent.central.central deck,
+               # reduce activesize by 1
+               self.logger.debug("No cards in central deck to refill central active deck.")
+               self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
+               self.parent.central.hand_size -= 1
+           
+           self.logger.game("Card bought")
+        else:
+           self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
+           self.logger.game("Insufficient money to buy. Current money: {}".format(self.money))
+        pass
+    def buy_supplement(self):
+        """buys a supplement from the parent.central"""
+        
+        if len(self.parent.central.supplements) > 0: # If supplements exist
+            self.logger.debug("Supplements Detected by {}".format(self.name))
+            purchase_card = self.parent.central.supplements[0]
+            
+            # Buy if player has enough self.money
+            # Move to player's discard pile
+            if self.money >= purchase_card.cost:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
+                
+                card = self.parent.central.supplements.pop()
+                self.discard.append(card)
+                
+                new_money = - card.cost
+                self.logger_buy_card(card, self.money, new_money)
+                self.money += new_money
+                self.logger.game("Supplement Bought")
+            else:
+                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
+                self.logger.game("Insufficient money to buy. Current money: {}".format(self.money))
+        else:
+            self.logger.debug("No Supplements available")
+            self.logger.game("No Supplements left")
+        pass
+    def __show_updated_user_state(self):
+        """Shows the updated / current user state"""
+        self.print_hand()           # Display User hand
+        self.print_active_cards()   # Display User active cards
+        self.display_values()       # Display PC state
         pass
 # separates classes in my editor
 @wrap_all(log_me)
@@ -337,8 +363,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         """contains the computer turn routines"""
         # Iterators to count money
         # and attack in User's hands
-        self.money = 0
-        self.attack = 0
+        self.reset_vals() # reset money and attack to zero
         
         # transfer all cards from hand to active
         # add values in hand to current totals
@@ -348,11 +373,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         self.display_values()
         
         # PC starts by attacking User
-        self.logger.debug("{} Health before attack: {}".format(self.parent.user.name, self.parent.user.health))
-        self.logger.game("{} attacking with strength {}".format(self.name, self.attack))
-        self.parent.user.health -= self.attack
-        self.attack = 0
-        self.logger.debug("{} Attack: {}".format(self.name, self.attack))
+        self.attack_player(self.parent.user)
         
         # Display health state
         self.logger.game("")
