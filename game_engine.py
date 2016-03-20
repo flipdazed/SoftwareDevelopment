@@ -137,10 +137,12 @@ class User(CommonActions, CommonUserActions):
             print "\nChoose Action: (P = play all, [0-n] = play that card, B = Buy Card, A = Attack, E = end turn)"
             iuser_action = raw_input("Enter Action: ").upper()
             self.logger.debug("User Input: {}".format(iuser_action))
+            
             if iuser_action == 'P':      # Play all cards
-                
+                self.logger.debug("Play all cards action selected (input: {}) ...".format(iuser_action))
                 self.hand == self.hand
                 if(len(self.hand)>0):  # Are there cards in the hand
+                    self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
                     # transfer all cards from hand to active
                     # add values in hand to current totals
                     self.play_all_cards()
@@ -154,8 +156,11 @@ class User(CommonActions, CommonUserActions):
                 # Display PC state
                 self.display_values()
             
-            if iuser_action.isdigit():   # Play a specific card
-                if( int(iuser_action) < len(self.hand)):
+            elif iuser_action.isdigit():   # Play a specific card
+                self.logger.debug("Play a single card action selected (input: {}) ...".format(iuser_action))
+                
+                if int(iuser_action) in xrange(0, len(self.hand)):
+                    self.logger.debug("{} is a valid card number.".format(int(iuser_action)))
                     self.play_a_card(card_number=iuser_action)
                 
                 # Display User hand
@@ -167,10 +172,22 @@ class User(CommonActions, CommonUserActions):
                 # Display PC state
                 self.display_values()
             
-            if (iuser_action == 'B'):    # Buy cards
+            elif (iuser_action == 'B'):    # Buy cards
+                self.logger.debug("Buy Cards action selected (input: {}) ...".format(iuser_action))
+                
+                def log_affords_card(self, num, name, cost, can_afford=True,wishlist=True):
+                    wishlist = " Added to wish list" if wishlist else ""
+                    afford = "can afford" if can_afford else "can not afford"
+                    self.logger.debug("{5} {4} {0}x{1} at cost:{2}.{3}".format(num,name, cost, wishlist, can_afford, self.name))
+                    pass
+                
+                def log_buy_card(self,card, self_money, change_in_money):
+                    self.logger.debug("{3} bought 1x{0}, money:{1}+{2}".format(card.name, self_money, change_in_money,self.name))
+                    pass
                 
                 # Check player has self.money available
                 while self.money > 0: # no warning of no self.money
+                    self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
                     
                     # Display central.central cards state
                     central.print_active_cards(index=True)
@@ -178,55 +195,92 @@ class User(CommonActions, CommonUserActions):
                     # User chooses a card to purchase
                     print "Choose a card to buy [0-n], S for supplement, E to end buying"
                     ibuy_input = raw_input("Choose option: ").upper()
+                    self.logger.debug("User Input: {}".format(ibuy_input))
                     
                     # Evaluate choice
                     if ibuy_input == 'S': # Buy a supplement
+                        self.logger.debug("Buy supplement action selected (input: {}) ...".format(ibuy_input))
                         if len(central.supplements) > 0: # If supplements exist
+                            self.logger.debug("Supplements Detected by Computer")
+                            purchase_card = central.supplements[0]
                             
                             # Buy if player has enough self.money
                             # Move to player's discard pile
-                            if self.money >= central.supplements[0].cost:
-                                self.money = self.money - central.supplements[0].cost
-                                self.discard.append(central.supplements.pop())
+                            if self.money >= purchase_card.cost:
+                                log_affords_card(self, 1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
+                                
+                                card = central.supplements.pop()
+                                self.discard.append(card)
+                                
+                                new_money = - card.cost
+                                log_buy_card(self, card, self.money, new_money)
+                                self.money += new_money
                                 print "Supplement Bought"
                             else:
-                                print "insufficient money to buy"
+                                log_affords_card(self, 1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
+                                print "Insufficient money to buy"
                         else:
-                            print "no supplements left"
+                            self.logger.debug("No Supplements available")
+                            print "No Supplements left"
                     
-                    elif ibuy_input == 'E': # User ends shopping spree
-                        break
                     elif ibuy_input.isdigit(): # Buy a card
-                        if int(ibuy_input) < len(central.active): # If card exists
+                        self.logger.debug("Buy card {0} action selected (input: {0}) ...".format(ibuy_input))
+                        
+                        if int(ibuy_input) in xrange(0,len(central.active)): # If card exists
+                             self.logger.debug("{} is a valid card number.".format(int(ibuy_input)))
+                             
                              # Buy if User has enough self.money
                              # Move directly to discard pile
-                             if self.money >= central.active[int(ibuy_input)].cost:
-                                self.money = self.money - central.active[int(ibuy_input)].cost
-                                self.discard.append(central.active.pop(int(ibuy_input)))
+                             purchase_card = central.active[int(ibuy_input)]
+                             if self.money >= purchase_card.cost:
+                                log_affords_card(self, 1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
+                                
+                                card = central.active.pop(int(ibuy_input))
+                                self.discard.append(card)
+                                
+                                new_money = - card.cost
+                                log_buy_card(self, card, self.money, new_money)
+                                self.money += new_money
                                 
                                 # Refill active from central.central deck
                                 # if there are cards in central.central
-                                if( len(central.deck) > 0):
+                                self.logger.debug("Attempting to refill card central active deck from central deck...")
+                                if len(central.deck) > 0:
+                                    self.logger.debug("{} cards in central deck".format(len(central.deck)))
                                     card = central.deck.pop()
                                     central.active.append(card)
+                                    self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
                                 else:
                                     # If no cards in central.central deck,
                                     # reduce activesize by 1
+                                    self.logger.debug("No cards in central deck to refill central active deck.")
+                                    self.logger.debug("central hand_size:{}-1".format(central.hand_size))
                                     central.hand_size -= 1
+                                
                                 print "Card bought"
                              else:
+                                log_affords_card(self, 1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
                                 print "insufficient money to buy"
                         else:
-                             print "enter a valid index number"
+                            self.logger.debug("{} is not valid card number for card for range:0-{}".format(int(ibuy_input),len(central.active)))
+                            print "enter a valid index number"
+                    elif ibuy_input == 'E': # User ends shopping spree
+                        self.logger.debug("End buying action selected (input: {}) ...".format(ibuy_input))
+                        break
                     else:
+                        self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
                         print "Enter a valid option"
             
-            if iuser_action == 'A':      # Attack
+            elif iuser_action == 'A':      # Attack
+                self.logger.debug("Attack action selected (input: {}) ...".format(iuser_action))
+                
+                self.logger.debug("Computer Health before attack: {}".format(computer.health))
                 computer.health -= self.attack
                 self.attack = 0
+                self.logger.debug("User Attack: {}".format(self.attack))
             
-            if iuser_action == 'E':      # Ends turn
-                
+            elif iuser_action == 'E':      # Ends turn
+                self.logger.debug("End Turn action selected (input: {}) ...".format(iuser_action))
                 # If User has cards in the hand add to discard pile
                 self.discard_hand()
                 
@@ -236,7 +290,10 @@ class User(CommonActions, CommonUserActions):
                 
                 # Move cards from User deck to User's hand
                 self.deck_to_hand()
+                
                 break
+            else:
+                self.logger.debug("No action matched to input (input: {}) ...".format(iuser_action))
         pass
 # separates classes in my editor
 @wrap_all(log_me)
@@ -284,6 +341,7 @@ class Computer(CommonActions, CommonUserActions):
         print "Computer attacking with strength %s" % self.attack
         user.health -= self.attack
         self.attack = 0
+        self.logger.debug("Computer Attack: {}".format(self.attack))
         
         # Display health state
         print ""
@@ -308,20 +366,23 @@ class Computer(CommonActions, CommonUserActions):
                 wish_list = [] # This will be a list of tuples
                 self.logger.debug("Temp purchase list (wish list) initiated")
                 
-                def log_affords_card(self, num, name, cost, can_afford=True,wishlist=True):
-                    wishlist = " Added to wish list" if wishlist else ""
-                    afford = "can afford" if can_afford else "can not afford"
-                    self.logger.debug("Computer {4} {0}x{1} at cost:{2}.{3}".format(num,name, cost, wishlist, can_afford))
-                    pass
                 def log_compare_cards(self, val_name, is_isnt, pot_val, des_val):
                     self.logger.debug("Potential card ({2}:{0}) {3} higher {2} than desired card ({2}:{1})".format(
                         pot_val,des_val,val_name,is_isnt))
                     pass
+                
                 def log_new_desired(self, card_index):
                     self.logger.debug("New desired card index: {}".format(card_index))
                     pass
+                
+                def log_affords_card(self, num, name, cost, can_afford=True,wishlist=True):
+                    wishlist = " Added to wish list" if wishlist else ""
+                    afford = "can afford" if can_afford else "can not afford"
+                    self.logger.debug("{5} {4} {0}x{1} at cost:{2}.{3}".format(num,name, cost, wishlist, can_afford, self.name))
+                    pass
+                
                 def log_buy_card(self,card, self_money, change_in_money):
-                    self.logger.debug("Computer bought 1x{}, money:{}+{}".format(card.name, self_money, change_in_money))
+                    self.logger.debug("{3} bought 1x{0}, money:{1}+{2}".format(card.name, self_money, change_in_money,self.name))
                     pass
                 
                 # Select Supplements if cost < self.money
@@ -336,7 +397,7 @@ class Computer(CommonActions, CommonUserActions):
                     else:
                         log_affords_card(self, 1, card.name, card.cost, can_afford=False)
                 else:
-                    self.logger.debug("No Supplements Detected by Computer")
+                    self.logger.debug("No Supplements available")
                 
                 # Select cards where cost of card_i < money
                 for intindex in xrange(0, central.hand_size):  # Loop all cards
@@ -469,7 +530,7 @@ class Computer(CommonActions, CommonUserActions):
                             
                             new_money = - card.cost
                             log_buy_card(self, card, self.money, new_money)
-                            self.money += self.money
+                            self.money += new_money
                         else:
                             log_affords_card(self, 1, purchase_card.name, purchase_card.cost, can_afford=False)
                             print "Error Occurred"

@@ -3,7 +3,7 @@ import logging
 from functools import wraps
 
 # initiates logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # http://stackoverflow.com/a/6307868/4013571
