@@ -119,6 +119,19 @@ class CommonUserActions(object):
         self.deck = self.deck_creator(self.deck_settings)
         
         pass
+    def end_turn(self):
+        """Ends the turn of the user"""
+        
+        # If player has cards in the hand add to discard pile
+        self.discard_hand()
+        
+        # If there cards in active deck
+        # then move all cards from active to discard
+        self.discard_active_cards()
+        
+        # Move cards from deck to hand
+        self.deck_to_hand()
+        pass
     def play_all_cards(self):
         """transfer all cards from hand to active
             add values in hand to current totals

@@ -137,7 +137,7 @@ class User(CommonActions, CommonUserActions):
             
             if iuser_action == 'P':      # Play all cards
                 self.logger.debug("Play all cards action selected (input: {}) ...".format(iuser_action))
-                self.hand == self.hand
+                
                 if(len(self.hand)>0):  # Are there cards in the hand
                     self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
                     # transfer all cards from hand to active
@@ -278,19 +278,11 @@ class User(CommonActions, CommonUserActions):
             
             elif iuser_action == 'E':      # Ends turn
                 self.logger.debug("End Turn action selected (input: {}) ...".format(iuser_action))
-                # If User has cards in the hand add to discard pile
-                self.discard_hand()
-                
-                # If there cards in User active deck
-                # then move all cards from active to discard
-                self.discard_active_cards()
-                
-                # Move cards from User deck to User's hand
-                self.deck_to_hand()
-                
                 break
             else:
                 self.logger.debug("No action matched to input (input: {}) ...".format(iuser_action))
+            
+        self.end_turn()
         pass
 # separates classes in my editor
 @wrap_all(log_me)
@@ -398,6 +390,8 @@ class Computer(CommonActions, CommonUserActions):
                 
                 # Select cards where cost of card_i < money
                 for card_index in xrange(0, central.hand_size):  # Loop all cards
+                    
+                    log_new_desired(self, card_index)
                     card = central.active[card_index]
                     
                     if card.cost <= self.money:   # if PC has enough money
@@ -546,18 +540,7 @@ class Computer(CommonActions, CommonUserActions):
             self.logger.debug("Computer has no money. Exiting purchase loop with money: {}".format(self.money))
             print "No Money to buy anything"
         
-        # If player has cards in the hand add to discard pile
-        self.discard_hand()
-        
-        # If there cards in PC active deck
-        # then move all cards from active to discard
-        # currently this will alwayds be true as PC
-        # plays all by default.
-        self.discard_active_cards()
-        
-        # Move cards from PC deck to PC hand
-        self.deck_to_hand()
-        
+        self.end_turn()
         print "Computer turn ending"
     pass
 # separates classes in my editor
@@ -577,31 +560,46 @@ class Gameplay(object):
         """Checks for end game conditions"""
         end_game = False
         
-        # continue_game = False flags the end of a game
+        def log_death(self, player):
+            self.logger.debug("{} has died with health {}".format(player.name, player.health))
+            pass
+        def log_health_comp(self, heathier, healthless, equal=False):
+            equal_health = "equal" if equal else "greater"
+            self.logger.debug("{} (health:{}) has "" health than {} (health:{})".format(
+                heathier.name, heathier.health,healthless.name, healthless.health),equal_health)
+            pass
+        
+        # end_game = False flags the end of a game
         if user.health <= 0:   # User has died
+            log_death(self, user)
             end_game = True
             print "Computer wins"
+            
         elif computer.health <= 0: # PC has died
+            log_death(self, computer)
             end_game = True
             print 'Player One Wins'
-        
-        # Game ends if size of active deck is zero
-        elif central.hand_size == 0:
+            
+        elif central.hand_size == 0: # Game ends if size of active deck is zero
+            self.logger.debug("Central Hand is zero (hand size:{})".format(central.hand_size))
             print "No more cards available"
+            
             if user.health > computer.health:
                 print "Player One Wins on Health"
+                log_health_comp(self, user, computer)
             elif computer.health > user.health:
                 print "Computer Wins"
-            else: # No clear winner: compare card stengths
-                pHT = 0
-                computer.pCT = 0
-                if pHT > computer.pCT:
-                    print "Player One Wins on Card Strength"
-                elif computer.pCT > pHT:
-                    print "Computer Wins on Card Strength"
-                else:
-                    print "Draw"
+                log_health_comp(self, user, computer)
+            else: # No clear winner
+                log_health_comp(self, user, computer, equal=True)
+                print "Draw"
+            end_game = False
+        else:
+            self.logger.debug("Player are both healthy: ({} health:{}, {} health:{})".format(
+                user.name, user.health,computer.name, computer.health))
+            self.logger.debug("Central Hand size is not zero (hand size:{})".format(central.hand_size))
         return end_game
+    
     def replay(self, user, computer, central):
         """Asks User if they want to replay"""
         iplay_game = raw_input("\nDo you want to play another game?").upper()
