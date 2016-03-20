@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # contains the common actions
-from logs import *
 import random
+
+from logs import *
 
 class Card(object):
     """Creates the card objects used in game"""
@@ -9,10 +13,11 @@ class Card(object):
         self.cost = cost
         self.attack = attack
         self.money = money
-    
+        
     def __str__(self):
-        return 'Name %s costing %s with attack %s and money %s' \
-            % (self.name, self.cost, self.attack, self.money)
+        s = "Cost: {1} ~ {0} ~ Stats ... Attack: {2}, Money: {3}".format(
+            self.name, self.cost, self.attack, self.money)
+        return s
     
     def get_attack(self):
         return self.attack
@@ -61,8 +66,9 @@ class CommonActions(object):
     def print_active_cards(self, index=False):
         """Display cards in active"""
         
-        if_user = "Your " if self.whoami == 'pO' else ""
-        print if_user + "Available Cards"
+        if_user = "Your " if type(self).__name__ == 'User' else ""
+        self.logger.debug("Actor is: {}".format(type(self).__name__))
+        self.logger.game(if_user + "Available Cards")
         
         self._print_cards(self.active, index=index)
         pass
@@ -98,7 +104,7 @@ class CommonActions(object):
         """Prints out the cards provided"""
         for i, card in enumerate(cards):
             index = "[{}] ".format(i) if index else ""
-            print index + "{}".format(card)
+            self.logger.game(index + "{}".format(card))
         pass
     
 @wrap_all(log_me)
@@ -196,12 +202,12 @@ class CommonUserActions(object):
         pass
     def display_values(self):
         """ Display player values"""
-        print " {} values attack {}, money {}".format(
-            self.name,self.attack, self.money)
+        self.logger.game(" {} values attack {}, money {}".format(
+            self.name,self.attack, self.money))
         pass
     def show_health(self):
         """Shows players' health"""
         # creates an attribute based on the class
         
-        print "{} Health {}".format(self.name,self.health)
+        self.logger.game("{} Health {}".format(self.name,self.health))
         pass 

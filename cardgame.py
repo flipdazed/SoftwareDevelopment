@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # This is the main game file
 from logs import *
+
 import game_engine
 from config import defaults
-
-logger = logging.getLogger(__name__)
 
 def main(game):
     """Main loop to allow error handling"""
@@ -28,12 +30,14 @@ def main(game):
     central.print_supplements()
     
     # Starting the game
-    iplay_game = raw_input("Do you want to play a game?").upper()
+    logger.game("Do you want to play a game?")
+    iplay_game = raw_input().upper()
     continue_game = (iplay_game=='Y')
     
     if not continue_game: game.exit()
      
-    iopponent_type = raw_input("Do you want an Aggressive (A) opponent or an Greedy (G) opponent").upper()
+    logger.game("Do you want an Aggressive (A) opponent or an Greedy (G) opponent")
+    iopponent_type = raw_input().upper()
     computer.aggressive = (iopponent_type=='A')
     logger.debug("Computer mode set to {}".format("Aggressive" if computer.aggressive else "Greedy"))
     
@@ -52,7 +56,7 @@ def main(game):
         central.display_all_active()
         
         # Display health state
-        print ""
+        print
         user.show_health()
         computer.show_health()
         
@@ -66,7 +70,7 @@ def main(game):
         central.display_all_active()
         
         # Display health state
-        print ""
+        print
         user.show_health()
         computer.show_health()
         

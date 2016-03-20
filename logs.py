@@ -1,10 +1,12 @@
-# directory-wide and shared processes
-import logging
-from functools import wraps
+#!/usr/bin/env python
+# encoding: utf-8
 
-# initiates logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# directory-wide and shared processes
+import sys
+import logging
+from logging_colorer import * # created pretty colors for logger
+from logging_formatter import * # created pretty colors for logger
+from functools import wraps
 
 # http://stackoverflow.com/a/6307868/4013571
 def wrap_all(decorator):
@@ -25,3 +27,17 @@ def log_me(func):
             args[0].logger.debug('...running {}'.format(func_name))
         return func(*args, **kwargs)
     return tmp
+
+def get_logger(self):
+    """Makes a logger based on the context"""
+    # creates a logger for the test file
+    name = type(self).__name__
+    self.logger = logging.getLogger(__name__+"."+name)
+    self.logger.info('Logger started...')
+    pass
+
+# initiates logging
+logging.root.setLevel(logging.DEBUG)
+
+# logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)

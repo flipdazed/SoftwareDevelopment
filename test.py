@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # This is a python testing file
 import config
 import game_engine
@@ -6,9 +9,6 @@ from logs import *
 
 import itertools, random
 import collections
-
-logger = logging.getLogger(__name__)
-
 
 def flatten(l):
     """This flattens arbitrarily annoying lists / dicts"""
@@ -44,9 +44,8 @@ class Settings(CommonTest):
     def __init__(self):
         """run tests"""
         
-        # creates a logger for the test file
-        self.logger = logging.getLogger(__name__+".Settings")
-        self.logger.info('Logger started.')
+        # # creates a logger for the test file
+        get_logger(self)
         
         # create classes of users and central deck
         self.central = game_engine.Central(**config.defaults['central'])
@@ -370,9 +369,8 @@ class Gameplay(CommonTest):
     def __init__(self):
         """run tests"""
         
-        # creates a logger for the test file
-        self.logger = logging.getLogger(__name__+".Gameplay")
-        self.logger.info('Logger started.')
+        # # creates a logger for the test file
+        get_logger(self)
         
         # create classes of users and central deck
         self.central = game_engine.Central(**config.defaults['central'])
