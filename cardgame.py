@@ -10,9 +10,13 @@ from config import defaults
 def main(game):
     """Main loop to allow error handling"""
     
-    game.new()  # Starting the game
+    # Starting the game with a friendly message
+    game.new("Welcome to my wonderful game. I hope you are as excited as I am to play!")
+    
     game.play() # plays the game
-    game.exit() # a friendly farewell
+    
+    # a friendly farewell
+    game.exit("Hope to see you again soon. Goodbye! (:")
     pass
 
 if __name__ == '__main__':

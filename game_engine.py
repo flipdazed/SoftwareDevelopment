@@ -134,6 +134,7 @@ class Gameplay(CommonGamePlayLoggers):
                 # Asking user if they want to replay
                 logger.debug("Starting Replay...")
                 self.continue_game = self.replay()
+                if not self.continue_game: break
             else:
             
                 #### Start User Turn ####
@@ -183,10 +184,10 @@ class Gameplay(CommonGamePlayLoggers):
         
         self.logger.game("Do you want to play another game?")
         iplay_game = raw_input().upper()
-        continue_game = (iplay_game=='Y')
+        self.continue_game = (iplay_game=='Y')
         
         # Initiate new game sequence
-        if continue_game:
+        if self.continue_game:
             
             # Starting the game
             self.logger.game("Do you want an aggressive (A) opponent or an greedy (G) opponent")
@@ -195,15 +196,21 @@ class Gameplay(CommonGamePlayLoggers):
             
             self.setup_game()
             
-        return continue_game
-    def new(self):
-        """starts the new game sequence"""
+        return self.continue_game
+    def new(self, welcome_msg=""):
+        """starts the new game sequence
+        expects welcome message as string"""
+        default_msg = "Welcome to my wonderful game. I hope you are as excited as I am to play!"
+        if not welcome_msg:
+            welcome_msg = default_msg
+        self.logger.game(welcome_msg)
         
-        self.logger.game("Do you want to play a game?")
+        self.logger.game("Do you want to play? 'Y' to continue, else exit")
         iplay_game = raw_input().upper()
         
         continue_game = (iplay_game=='Y')
-        if not continue_game: self.exit()
+        if not continue_game: 
+            self.exit()
         
         self.logger.game("Do you want an Aggressive (A) opponent or an Greedy (G) opponent")
         iopponent_type = raw_input().upper()
@@ -234,10 +241,14 @@ class Gameplay(CommonGamePlayLoggers):
         self.central.print_active_cards()
         self.central.print_supplements()
         pass
-    def exit(self):
-        """Friendly exit"""
+    def exit(self, exit_msg=""):
+        """Friendly exit expects exit message as string"""
+        default_msg = "Hope to see you again soon. Goodbye! (:"
+        if not exit_msg:
+            exit_msg = default_msg
+        
         self.logger.game("")
-        self.logger.game("Hope to see you again soon. Goodbye :)") 
+        self.logger.game(exit_msg) 
         sys.exit() # Terminate
         pass
     def hostile_exit(self):
