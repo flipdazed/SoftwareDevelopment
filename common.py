@@ -202,7 +202,7 @@ class CommonUserActions(object):
         pass
     def display_values(self):
         """ Display player values"""
-        self.logger.game(" {} values attack {}, money {}".format(
+        self.logger.game("{} values attack {}, money {}".format(
             self.name,self.attack, self.money))
         pass
     def show_health(self):

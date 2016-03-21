@@ -483,7 +483,50 @@ class Gameplay(__CommonTest__):
         
         error = (self.central.test_param != "LOLCANO")
         return error
+
+class Formatting(__CommonTest__):
+    
+    def __init__(self):
+        # # creates a logger for the test file
+        get_logger(self)
+        
+        # runs all tests
+        tests = [
+            "formatter_names"
+            ]
+        
+        self.run_tests(tests)
+        pass
+    
+    def formatter_names(self):
+        """tests the formatting levels work correctly"""
+        
+        LOGGER_NAMES = ["USER","COMPUTER", "GAME"]
+        colors = ["white", "cyan", "orange"]
+        
+        self.logger.info("")
+        
+        # loop
+        for test_name,c in zip(LOGGER_NAMES, colors):
+            small = test_name.lower()
+            getattr(self.logger, small)(
+            "KAPOW! ~ from logger.{}".format(small))
+        
+        self.logger.warning("")
+        self.logger.warning("Visual check required.")
+        self.logger.warning("Hit 'e' if error anything else is a pass.")
+        self.logger.warning("")
+        
+        for test_name,c in zip(LOGGER_NAMES, colors):
+            small = test_name.lower()
+            self.logger.warning("logger.{} should be {}".format(small,c))
+        
+        error = (raw_input() == 'e')
+        return error
+
 if __name__ == '__main__':
+    logging.root.setLevel(logging.DEBUG)
     settings = Settings()
     test = Gameplay()
     children = ParentChild()
+    formatting = Formatting()

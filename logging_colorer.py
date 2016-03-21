@@ -4,7 +4,8 @@ import logging
 import platform
 
 ### Code to allow coloured outputs across platform terminals ####
-### THIS CODE IS TAKEN FROM # http://stackoverflow.com/a/1336640/4013571 ####
+### THIS CODE IS TAKEN FROM 
+# http://stackoverflow.com/a/1336640/4013571
 # now we patch Python code to add color support to logging.StreamHandler
 def add_coloring_to_emit_windows(fn):
     # add methods we need to the class
@@ -61,6 +62,10 @@ def add_coloring_to_emit_windows(fn):
             color = FOREGROUND_RED | FOREGROUND_INTENSITY
         elif(levelno>=30):
             color = FOREGROUND_YELLOW | FOREGROUND_INTENSITY
+        elif(levelno>=27):
+            color = FOREGROUND_WHITE
+        elif(levelno>=26):
+            color = FOREGROUND_WHITE
         elif(levelno>=25):
             color = FOREGROUND_WHITE
         elif(levelno>=20):
@@ -78,24 +83,47 @@ def add_coloring_to_emit_windows(fn):
     return new
 
 def add_coloring_to_emit_ansi(fn):
+    white  = '\x1b[37m'
+    cyan   = '\x1b[36m'
+    yellow = '\x1b[33m'
+    green  = '\x1b[32m'
+    pink   = '\x1b[35m'
+    red    = '\x1b[31m'
+    plain  = '\x1b[0m'
+    
     # add methods we need to the class
     def new(*args):
         levelno = args[1].levelno
         if(levelno>=50):
-            color = '\x1b[31m' # red
+            color = red
         elif(levelno>=40):
-            color = '\x1b[31m' # red
+            color = red
         elif(levelno>=30):
-            color = '\x1b[33m' # yellow
+            color = yellow
+        
+        elif(levelno>=27):
+            color = plain
+        elif(levelno>=26):
+            color = red
         elif(levelno>=25):
-            color = '\x1b[37m' # white
+            color = pink
+        elif(levelno>=24):
+            color = green
+        elif(levelno>=23):
+            color = yellow
+        elif(levelno>=22):
+            color = cyan
+        elif(levelno>=21):
+            color = white
+        
         elif(levelno>=20):
-            color = '\x1b[32m' # green
+            color = green
         elif(levelno>=10):
-            color = '\x1b[35m' # pink
+            color = pink
         else:
-            color = '\x1b[0m' # normal
-        args[1].msg = color + str(args[1].msg) + '\x1b[0m' # normal
+            color = plain
+        
+        args[1].msg = color + str(args[1].msg) + plain # normal
         #print "after"
         return fn(*args)
     return new

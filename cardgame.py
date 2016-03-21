@@ -7,6 +7,14 @@ from logs import *
 import game_engine
 from config import defaults
 
+###### Options #######
+level = logging.GAME
+# logging.DEBUG
+# logging.INFO
+# logging.GAME
+######################
+logging.root.setLevel(level)
+
 def main(game):
     """Main loop to allow error handling"""
     
