@@ -231,8 +231,6 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 else:
                     self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 
-                self.__show_updated_user_state()
-                
             elif (iuser_action == 'B'):     # Buy cards
                 self.logger.debug("Buy Cards action selected (input: {}) ...".format(iuser_action))
                 self.card_shop() # go to the shop to buy cards
