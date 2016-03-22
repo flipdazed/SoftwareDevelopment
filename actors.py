@@ -165,7 +165,14 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         # and attack in players' hands
         self.reset_vals() # resetes money / attack
         
-        while True: # User's Turn
+        # a first message is shown as an example
+        self.clear_delayed_messages()
+        self.add_delayed_message("Play cards to build Money and Attack.",self.logger.game)
+        self.add_delayed_message("Both Attack and Money will return to 0 at the end of your turn.", self.logger.game)
+        
+        # User's Turn
+        while not self.parent.end():
+            
             self.parent.clear_term()
             
             # Display health state
@@ -175,6 +182,8 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             self.parent.central.display_all_active()
             
             self.__show_updated_user_state()
+            
+            self.print_delayed_messages()
             
             # In-game actions UI
             self.player_logger("")
@@ -196,7 +205,8 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                     # add values in hand to current totals
                     self.play_all_cards()
                 else: # there are no cards in the user's hand
-                    self.player_logger("There are no cards currently in your hand to play!")
+                    self.add_delayed_message(
+                        "There are no cards currently in your hand to play!", self.logger.game)
                     self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
                     
             elif iuser_action.isdigit():    # Play a specific card
@@ -208,7 +218,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                     self.logger.debug("{} is a valid card number.".format(int(iuser_action)))
                     self.play_a_card(card_number=iuser_action)
                 elif len(self.hand) == 0:
-                    self.player_logger("There are no cards currently in your hand to play!")
+                    self.logger.game("There are no cards currently in your hand to play!")
                 else:
                     self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 
@@ -229,27 +239,40 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 self.logger.debug("User wants to quite the game")
                 self.parent.hostile_exit()
             else:
-                self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
-                self.logger.debug("No action matched to input (input: {}) ...".format(iuser_action))
+                self.logger.debug(
+                "No action matched to input (input: {}) ...".format(iuser_action))
+                self.add_delayed_message(
+                    "'{}' is not a valid option. Please try again.".format(iuser_action),
+                    self.logger.game)
         
         # ends turn and prints debug message
         self.end_turn()
         pass
     def card_shop(self):
         """contains the shop for buying cards"""
-        # Check player has self.money available
-        self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
-        self.logger.game(self.art.underline)
-        self.logger.game("Cards bought here are added to your discard pile")
-        self.logger.game("")
         
+        # clear any stored messages
+        self.clear_delayed_messages(in_shop=True)
+        
+        # Check player has self.money available
         while self.money > 0: # no warning of no self.money
+            self.parent.clear_term() # clear the screen
+            # welcome to the shop
+            self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
+            self.logger.game(self.art.underline)
+            self.logger.game("Cards bought here are added to your discard pile")
+            self.logger.game("")
+            
             self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
             
             # Display central.central cards state
-            self.parent.central.print_active_cards(index=True)
+            self.parent.central.print_active_cards("Central Buyable Cards", index=True)
             self.logger.game("")
             self.player_logger("Current money: {}".format(self.money))
+            
+            # display delayed messages
+            self.print_delayed_messages(in_shop=True)
+            
             # User chooses a card to purchase
             self.player_logger("")
             self.player_logger(self.art.choose_action)
@@ -271,11 +294,12 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 self.parent.hostile_exit()
             else:                           # cycle the shopping loop
                 self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
-                self.logger.game("'{}' is not a valid option. Please try again.".format(ibuy_input))
+                self.add_delayed_message(
+                    "'{}' is not a valid option. Please try again.".format(ibuy_input),
+                    self.logger.game, in_shop=True)
         
-        self.player_logger("Unfortunately you have no remaining money")
-        self.player_logger("You have been thrown out of the shop!")
-        self.parent.wait_for_user()
+        self.logger.debug("Exiting the card shop")
+        self.exit_card_shop()
         pass
     def purchase_cards(self, ibuy_input):
         """User purchases cards"""
@@ -292,7 +316,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 self.buy_card_by_index(ibuy_input)
             else:
                 self.logger.debug("{} is not valid card number for card for range:0-{}".format(int(ibuy_input),len(self.parent.central.active)))
-                self.logger.game("Enter a valid index number")
+                self.add_delayed_message("Enter a valid index number", self.logger.game, in_shop=True)
         pass
     def buy_card_by_index(self, ibuy_input):
         """buys a particular card by index
@@ -303,6 +327,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         # Move directly to discard pile
         purchase_card = self.parent.central.active[int(ibuy_input)]
         if self.money >= purchase_card.cost:
+            
            self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=True,wishlist=False)
            
            card = self.parent.central.active.pop(int(ibuy_input))
@@ -317,8 +342,10 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
            self.logger.debug("Attempting to refill card central active deck from central deck...")
            if len(self.parent.central.deck) > 0:
                self.logger.debug("{} cards in central deck".format(len(self.parent.central.deck)))
+               
                card = self.parent.central.deck.pop()
                self.parent.central.active.append(card)
+               
                self.logger.debug("Moved 1x{} from {} to {}".format(card.name, "central deck", "central active deck"))
            else:
                # If no cards in self.parent.central.central deck,
@@ -327,10 +354,12 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
                self.parent.central.hand_size -= 1
            
-           self.player_logger("Card bought")
+           self.add_delayed_message("Card bought", in_shop=True)
         else:
            self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-           self.player_logger("Insufficient money to buy. Current money: {}".format(self.money))
+           self.add_delayed_message(
+               "Insufficient money to buy. Current money: {}".format(self.money),
+               in_shop=True)
         pass
     def buy_supplement(self):
         """buys a supplement from the parent.central"""
@@ -350,19 +379,75 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 new_money = - card.cost
                 self.logger_buy_card(card, self.money, new_money)
                 self.money += new_money
-                self.player_logger("Supplement Bought")
+                self.add_delayed_message("Supplement Bought.", in_shop=True)
             else:
                 self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-                self.player_logger("Insufficient money to buy. Current money: {}".format(self.money))
+                self.add_delayed_message(
+                    "Insufficient money to buy. Current money: {}".format(self.money),
+                    in_shop=True)
         else:
             self.logger.debug("No Supplements available")
-            self.logger.game("No Supplements left")
+            self.add_delayed_message("No Supplements Left!", self.logger.game, in_shop=True)
         pass
     def __show_updated_user_state(self):
         """Shows the updated / current user state"""
         self.print_hand()           # Display User hand
         self.print_active_cards()   # Display User active cards
         self.display_values()       # Display PC state
+        pass
+    
+    def clear_delayed_messages(self, in_shop=False):
+        """clears ready for turn"""
+        
+        if in_shop:
+            self.delayed_shop_messages = []
+        else:
+            self.delayed_messages = []
+        pass
+    
+    def add_delayed_message(self, msg, logger=None, in_shop=False):
+        """add a delayed message"""
+        if logger is None: logger = self.player_logger
+        
+        msg_dict = {"msg":msg, "logger":logger}
+        if in_shop:
+            self.delayed_shop_messages.append(msg_dict)
+        else:
+            self.delayed_messages.append(msg_dict)
+        pass
+    
+    def print_delayed_messages(self, in_shop=False):
+        """prints all the delayed messages"""
+        if in_shop:
+            iterator = self.delayed_shop_messages
+        else:
+            iterator = self.delayed_messages
+        
+        while iterator:
+            item = iterator.pop()
+            msg = item["msg"]
+            logger = item["logger"]
+            logger(msg) # use logger from dict to output message
+        pass
+    def exit_card_shop(self):
+        """UI for exiting the card shop"""
+        
+        # user is ungracefully booted from shop
+        if self.money == 0:
+            self.parent.clear_term() # clear the screen
+            # welcome to the shop
+            self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
+            self.logger.game(self.art.underline)
+            self.logger.game("Cards bought here are added to your discard pile")
+            self.logger.game("")
+        
+            self.print_delayed_messages(in_shop=True)
+            self.logger.game("Unfortunately you have no remaining money...")
+            self.logger.game("You are being kicked out of the shop.")
+            self.parent.wait_for_user()
+        else: # else user has a nice quick exit
+            pass
+        self.add_delayed_message("You return from the Shop.", self.logger.game)
         pass
 # separates classes in my editor
 @wrap_all(log_me)

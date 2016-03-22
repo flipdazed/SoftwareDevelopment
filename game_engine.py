@@ -166,11 +166,11 @@ class Gameplay(CommonGamePlayLoggers):
         
         # end_game = False flags the end of a game
         if self.user.health <= 0:   # User has died
-            self.logger_win_by_death(winner=self.user, loser=self.computer)
+            self.logger_win_by_death(winner=self.computer, loser=self.user)
             end_game = True
             
         elif self.computer.health <= 0: # PC has died
-            self.logger_win_by_death(winner=self.computer, loser=self.user)
+            self.logger_win_by_death(winner=self.user, loser=self.computer)
             end_game = True
             
         elif self.central.hand_size == 0: # Game ends if size of active deck is zero

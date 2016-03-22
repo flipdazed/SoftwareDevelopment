@@ -12,13 +12,13 @@ class Art(object):
         # buffers the index for main card display
         self.index_buffer = "    " 
         self.shop_options = \
-        "Shop Options :: [#] Buy Card #   [S] = Buy Supplement                "
+        "Shop Options :: [#] Buy Card #   [S] = Buy Supplement  [E] = Exit Shop"
         self.card_options = \
-        "Card Options :: [P] Play All     [#] = Play Card #   [B] :: Buy Cards"
+        "Card Options :: [P] Play All     [#] = Play Card #     [B] :: Buy Cards"
         self.game_options = \
-        "Game Actions :: [A] Attack!      [E] = End Turn      [Q] :: Quit Game"
+        "Game Actions :: [A] Attack!      [E] = End Turn        [Q] :: Quit Game"
         self.continue_game = \
-        "Game Actions :: [..] Enter to proceed                [Q] :: Quit Game"
+        "Game Actions :: [..] Enter to proceed                  [Q] :: Quit Game"
         self.choose_action = self.make_title("Choose_Action").replace("_"," ")
         self.welcome2 = \
         """
