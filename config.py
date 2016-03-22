@@ -4,9 +4,6 @@ import itertools, random
 import collections
 logger = logging.getLogger(__name__)
 
-logger.debug("imported configurations")
-
-
 defaults = {
     "central":{
         "name":'Central', #"Central",
@@ -29,7 +26,7 @@ defaults = {
             [{"count":10 ,"params":{"name":'Levy', "attack":1, "money":2, "cost":2}}]
         }
     ,"user":{
-        "name":'Lord Vadar',  #"Player One",
+        "name":'Blobasaurus Rex',  #"Player One",
         "health":30,
         "hand_size":5,
         "deck_settings":[ # User's deck

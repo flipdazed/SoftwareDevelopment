@@ -5,8 +5,9 @@ from logs import *
 logger = logging.getLogger(__name__)
 
 from common import *
+from game_art import Art
 
-class CommonCentralLoggers(object):
+class __CentralLoggers(object):
     """dumping ground for messy loggers
     from central"""
     def __init__(self):
@@ -22,7 +23,7 @@ class CommonCentralLoggers(object):
         else:
             str_val
         pass
-class CommonUserLoggers(object):
+class ___UserLoggers(object):
     """dumping ground for messy loggers
     from User and Computer"""
     def __init__(self):
@@ -54,18 +55,20 @@ class CommonUserLoggers(object):
         pass
 # separates classes in my editor
 @wrap_all(log_me)
-class Central(CommonActions,CommonCentralLoggers):
+class Central(CommonActions,__CentralLoggers):
     """The Central Deck Class"""
     def __init__(self, parent, hand_size, deck_settings, name, supplements):
         """initial settings for the central cards"""
         self.parent = parent
         
+        self.art = Art() # create art for game
+        
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         
         # logging
-        self.logger = logging.getLogger(__name__ + ".Central")
-        self.logger.debug("Central Created.")
+        get_logger(self)
+        self.player_logger = self.logger.game
         
         self.hand_size = hand_size
         self.name = name
@@ -74,7 +77,6 @@ class Central(CommonActions,CommonCentralLoggers):
         
         # create newgame paramters
         self.newgame()
-        
     
     def newgame(self):
         """Initiates a new game by refreshing saved config parameters"""
@@ -105,30 +107,39 @@ class Central(CommonActions,CommonCentralLoggers):
             self.logger.debug('iteration #{}: Moving {} from deck to active'.format(i, card.name))
         pass
     
-    def print_supplements(self):
+    def print_supplements(self, logger=None):
         """Display supplements"""
-        self.logger.game("Supplements")
+        title = self.art.make_title("Supplements")
+        supplement = self.art.index_buffer+ str(self.supplements[0])
+        
+        if logger:
+            logger(title)
+        else:
+            self.player_logger(title)
         if len(self.supplements) > 0:
-            self.logger.game(self.supplements[0])
+            self.player_logger(supplement)
+        self.player_logger(self.art.underline)
         pass
     def display_all_active(self):
         """displays both active cards and the supplements"""
-        self.print_active_cards()
+        self.logger.game("")
+        self.print_active_cards(title="Central Buyable Cards")
         self.print_supplements()
         pass
 # separates classes in my editor
 @wrap_all(log_me)
-class User(CommonActions, CommonUserActions, CommonUserLoggers):
+class User(CommonActions, CommonUserActions, ___UserLoggers):
     """The User Class"""
     def __init__(self, parent, hand_size, deck_settings, name, health):
         """initial settings for the User"""
         self.parent = parent
-        
+        self.art = Art() # create art for game
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         
         # logging
         get_logger(self)
+        self.player_logger = self.logger.user
         
         self.hand_size = hand_size
         self.name = name
@@ -142,9 +153,10 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
         """displays the indexed user hand"""
         
         # Display User hand
-        self.logger.game("")
-        self.logger.game("Your Hand")
+        self.player_logger("")
+        self.player_logger(self.art.make_title("Your Hand"))
         self._print_cards(self.hand, index=True)
+        self.player_logger(self.art.underline)
         
         pass
     def turn(self):
@@ -154,20 +166,32 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
         self.reset_vals() # resetes money / attack
         
         while True: # User's Turn
+            self.parent.clear_term()
             
             # Display health state
             self.parent.display_health_status()
             
+            # display active deck and supplements
+            self.parent.central.display_all_active()
+            
             # Display User hand
             self.print_hand()
             
+            # display user values
+            self.display_values()
+            
             # In-game actions UI
-            self.logger.game("")
-            self.logger.game("Choose Action: (P = Play All Cards, [0-n] = Play Card by Index, B = Buy Card, A = Attack, E = End Turn)")
+            self.player_logger("")
+            self.player_logger(self.art.choose_action)
+            self.player_logger(self.art.card_options)
+            self.player_logger(self.art.game_options)
+            self.player_logger(self.art.underline)
+            
+            # get user input
             iuser_action = raw_input().upper()
             self.logger.debug("User Input: {}".format(iuser_action))
             
-            if iuser_action == 'P':      # Play all cards
+            if iuser_action == 'P':         # Play all cards
                 self.logger.debug("Play all cards action selected (input: {}) ...".format(iuser_action))
                 
                 if(len(self.hand)>0):  # Are there cards in the hand
@@ -176,12 +200,12 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
                     # add values in hand to current totals
                     self.play_all_cards()
                 else: # there are no cards in the user's hand
-                    self.logger.game("There are no cards currently in your hand to play!")
+                    self.player_logger("There are no cards currently in your hand to play!")
                     self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
                 
                 self.__show_updated_user_state()
                     
-            elif iuser_action.isdigit():   # Play a specific card
+            elif iuser_action.isdigit():    # Play a specific card
                 
                 self.logger.debug("Play a single card action selected (input: {}) ...".format(iuser_action))
                 
@@ -190,23 +214,26 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
                     self.logger.debug("{} is a valid card number.".format(int(iuser_action)))
                     self.play_a_card(card_number=iuser_action)
                 elif len(self.hand) == 0:
-                    self.logger.game("There are no cards currently in your hand to play!")
+                    self.player_logger("There are no cards currently in your hand to play!")
                 else:
                     self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 
                 self.__show_updated_user_state()
                 
-            elif (iuser_action == 'B'):    # Buy cards
+            elif (iuser_action == 'B'):     # Buy cards
                 self.logger.debug("Buy Cards action selected (input: {}) ...".format(iuser_action))
                 self.card_shop() # go to the shop to buy cards
                 
-            elif iuser_action == 'A':      # Attack
+            elif iuser_action == 'A':       # Attack
                 self.logger.debug("Attack action selected (input: {}) ...".format(iuser_action))
                 self.attack_player(self.parent.computer)
             
-            elif iuser_action == 'E':      # Ends turn
+            elif iuser_action == 'E':       # Ends turn
                 self.logger.debug("End Turn action selected (input: {}) ...".format(iuser_action))
                 break
+            elif iuser_action == 'Q':       # Quit Game
+                self.logger.debug("User wants to quite the game")
+                self.parent.hostile_exit()
             else:
                 self.logger.game("'{}' is not a valid option. Please try again.".format(iuser_action))
                 self.logger.debug("No action matched to input (input: {}) ...".format(iuser_action))
@@ -217,18 +244,23 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
     def card_shop(self):
         """contains the shop for buying cards"""
         # Check player has self.money available
+        self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
+        self.logger.game(self.art.underline)
+        self.logger.game("Cards bought here are added to your discard pile")
+        self.logger.game("")
         
         while self.money > 0: # no warning of no self.money
-            self.logger.game("Current money: {}".format(self.money))
             self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
             
             # Display central.central cards state
             self.parent.central.print_active_cards(index=True)
-            
-            # User chooses a card to purchase
             self.logger.game("")
-            self.logger.game("Choose a card to buy [0-n], S for supplement, E to end buying")
-            self.logger.game("Choose option: ")
+            self.player_logger("Current money: {}".format(self.money))
+            # User chooses a card to purchase
+            self.player_logger("")
+            self.player_logger(self.art.choose_action)
+            self.player_logger(self.art.shop_options)
+            self.player_logger(self.art.underline)
             ibuy_input = raw_input().upper()
             
             self.logger.debug("User Input: {}".format(ibuy_input))
@@ -236,17 +268,19 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
             if ibuy_input.isdigit() or ibuy_input == 'S': # users attempts to purcahse a card
                 self.purchase_cards(ibuy_input)
             
-            elif ibuy_input == 'E': # User ends shopping spree
+            elif ibuy_input == 'E':         # User ends shopping spree
                 self.logger.debug("End buying action selected (input: {}) ...".format(ibuy_input))
                 break
             
-            else: # cycle the shopping loop
+            elif ibuy_input == 'Q':       # Quit Game
+                self.logger.debug("User wants to quite the game")
+                self.parent.hostile_exit()
+            else:                           # cycle the shopping loop
                 self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
                 self.logger.game("'{}' is not a valid option. Please try again.".format(ibuy_input))
         
-        thrown_out = "Unfortunately you have no remaining money: "
-        thrown_out += "You have been thrown out of the shop.".format(self.money)
-        self.logger.game(thrown_out)
+        self.player_logger("Unfortunately you have no remaining money")
+        self.player_logger("You have been thrown out of the shop!")
         pass
     def purchase_cards(self, ibuy_input):
         """User purchases cards"""
@@ -298,10 +332,10 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
                self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
                self.parent.central.hand_size -= 1
            
-           self.logger.game("Card bought")
+           self.player_logger("Card bought")
         else:
            self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-           self.logger.game("Insufficient money to buy. Current money: {}".format(self.money))
+           self.player_logger("Insufficient money to buy. Current money: {}".format(self.money))
         pass
     def buy_supplement(self):
         """buys a supplement from the parent.central"""
@@ -321,10 +355,10 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
                 new_money = - card.cost
                 self.logger_buy_card(card, self.money, new_money)
                 self.money += new_money
-                self.logger.game("Supplement Bought")
+                self.player_logger("Supplement Bought")
             else:
                 self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False,wishlist=False)
-                self.logger.game("Insufficient money to buy. Current money: {}".format(self.money))
+                self.player_logger("Insufficient money to buy. Current money: {}".format(self.money))
         else:
             self.logger.debug("No Supplements available")
             self.logger.game("No Supplements left")
@@ -337,11 +371,12 @@ class User(CommonActions, CommonUserActions, CommonUserLoggers):
         pass
 # separates classes in my editor
 @wrap_all(log_me)
-class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
+class Computer(CommonActions, CommonUserActions, ___UserLoggers):
     """The Computer Player Class"""
     def __init__(self, parent, hand_size, deck_settings, name, health):
         """initial settings for the computer player"""
         self.parent = parent
+        self.art = Art() # create art for game
         # store initial state
         self.init = {attr:val for attr,val in locals().iteritems() if attr != 'self'}
         
@@ -354,6 +389,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         
         # logging
         get_logger(self)
+        self.player_logger = self.logger.computer
         
         # create newgame paramters
         self.newgame()
@@ -361,14 +397,16 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         """contains the computer turn routines"""
         # Iterators to count money
         # and attack in User's hands
+        self.parent.clear_term()
         self.reset_vals() # reset money and attack to zero
         
         # transfer all cards from hand to active
         # add values in hand to current totals
         self.play_all_cards()
         
-        # Display PC state
-        self.display_values()
+        self.logger.debug("Storing computer values ready for attack")
+        stored_attack = self.attack
+        stored_money  = self.money
         
         # PC starts by attacking User
         self.attack_player(self.parent.user)
@@ -377,13 +415,29 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         self.parent.display_health_status()
         
         # Display PC state
+        self.logger.debug("Displaying stored computer values from before attack")
+        self.display_values(stored_attack, stored_money)
+        
+        # Display PC state
+        name_pad = self.parent.max_player_name_len
+        self.player_logger(\
+        "{}     Attacking!".format(self.name.ljust(name_pad)))
+        self.parent.user.player_logger(\
+        "{}     Suffered a beating of -{} Health".format(
+                self.parent.user.name.ljust(name_pad),stored_attack))
+        
+        self.logger.debug("Displaying stored computer values from AFTER attack")
         self.display_values()
         
-        self.logger.game("{} buying".format(self.name))
+        computer_buys_title = self.art.make_title("{} Buying".format(self.name))
+        self.player_logger(computer_buys_title)
         self.purchase_cards()
+        self.player_logger(self.art.underline)
+        self.player_logger("")
         
         self.end_turn()
-        self.logger.game("{} turn ending".format(self.name))
+        self.player_logger("{} turn ending".format(self.name))
+        self.parent.wait_for_user()
         pass
     
     def purchase_cards(self):
@@ -393,7 +447,9 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
         can_afford_cards = True
         if can_afford_cards and self.money > 0:   # Commence buying if PC has money 
             self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
-            self.logger.game("{} buying cards with money: {}".format(self.name ,self.money))
+            self.player_logger("")
+            self.player_logger("{} is browsing... Money: {}".format(
+            self.name ,self.money))
             # Loop while cb, conditions:
             # len(self.wish_list) > 0 and money != 0
             # The temporary list of purchased
@@ -434,7 +490,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
                 self.logger.debug("{} has no money. Exiting wish list loop (money: {})".format(self.name, self.money))
         else:           # Don't buy if no money
             self.logger.debug("{} has no money. Exiting purchase loop with money: {}".format(self.name, self.money))
-            self.logger.game("No Money to buy anything")
+            self.player_logger("No Money to buy anything")
         pass
     
     def buy_card_by_index(self, source):
@@ -457,7 +513,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
                 card = self.parent.central.active.pop(int(source))
                 self.discard.append(card)
                 
-                self.logger.game("Card bought {}".format(card))
+                self.logger.game("Card bought... {}".format(card))
                 
                 new_money = - card.cost
                 self.logger_buy_card(card, self.money, new_money)
@@ -492,7 +548,7 @@ class Computer(CommonActions, CommonUserActions, CommonUserLoggers):
                 
                 card = self.parent.central.supplements.pop()
                 self.discard.append(card)
-                self.logger.game("Supplement Bought {}".format(card))
+                self.player_logger("Supplement Bought {}".format(card))
                 
                 new_money = - card.cost
                 self.logger_buy_card(card, self.money, new_money)

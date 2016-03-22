@@ -8,16 +8,27 @@ from logs import *
 
 class Card(object):
     """Creates the card objects used in game"""
-    def __init__(self, name, attack, money, cost):
+    def __init__(self, name, attack, money, cost, name_padding=15, num_padding=2):
         self.name = name
         self.cost = cost
         self.attack = attack
         self.money = money
         
+        self.name_padding = name_padding
+        self.num_padding = num_padding
+        
+        self.padded_vals = (
+            str(self.cost).ljust(self.num_padding),
+            self.name.ljust(self.name_padding),
+            str(self.attack).ljust(self.num_padding),
+            str(self.money).ljust(self.num_padding),
+        )
+        
     def __str__(self):
-        s = "Cost: {1} ~ {0} ~ Stats ... Attack: {2}, Money: {3}".format(
-            self.name, self.cost, self.attack, self.money)
-        return s
+        """outputs string of the card details when called as print Card()"""
+        s_out = "Cost: {0} ~ {1} ~ Stats ... Attack: {2}, Money: {3}".format(
+            *self.padded_vals)
+        return s_out
     
     def get_attack(self):
         return self.attack
@@ -31,6 +42,7 @@ class CommonActions(object):
     used by all game classes
     """
     def __init__(self):
+        # self.art = Art()
         pass
     
     def deck_to_hand(self):
@@ -63,14 +75,19 @@ class CommonActions(object):
             self.logger.debug("Iteration #{}: Drawn {} from deck and added to hand".format(i,card.name))
         pass
     
-    def print_active_cards(self, index=False):
+    def print_active_cards(self, title=None, index=False):
         """Display cards in active"""
         
-        if_user = "Your " if type(self).__name__ == 'User' else ""
+        if title is None: title = "Your Played Cards"
+        
+        # switch depending on player type
         self.logger.debug("Actor is: {}".format(type(self).__name__))
-        self.logger.game(if_user + "Available Cards")
+        
+        title = self.art.make_title(title)
+        self.player_logger(title)
         
         self._print_cards(self.active, index=index)
+        self.player_logger(self.art.underline)
         pass
         
     def deck_creator(self, deck_list):
@@ -96,15 +113,24 @@ class CommonActions(object):
         for card in deck_list:
             for _ in xrange(card["count"]):
                 # passes the dictionary as a keyword arg (**kwarg)
-                deck.append(Card(**card["params"]))
+                deck.append(Card(
+                    name_padding=self.parent.max_card_name_len,
+                    num_padding=2,
+                    **card["params"]
+                    ))
             self.logger.debug("Created {}x{}".format(card["count"], card["params"]["name"]))
         return deck
     
     def _print_cards(self, cards, index=False):
         """Prints out the cards provided"""
-        for i, card in enumerate(cards):
-            index = "[{}] ".format(i) if index else ""
-            self.logger.game(index + "{}".format(card))
+        # max card name length
+        
+        if len(cards) == 0:
+            self.logger.game("Looks like all the cards here have been used!")
+        else:
+            for i, card in enumerate(cards):
+                num_str = "[{}] ".format(i) if index else self.art.index_buffer
+                self.logger.game(num_str + "{}".format(card))
         pass
     
 @wrap_all(log_me)
@@ -200,16 +226,31 @@ class CommonUserActions(object):
         else:
             self.logger.debug("Active Deck length is zero. No cards to discard.")
         pass
-    def display_values(self):
+    def display_values(self, attack=None, money=None):
         """ Display player values"""
-        self.logger.game("{} values attack {}, money {}".format(
-            self.name,self.attack, self.money))
+        
+        # allows forced values
+        if attack is None: attack = self.attack
+        if money is None:  money  = self.money
+        
+        padded_name = self.name.ljust(self.parent.max_player_name_len)
+        out_str = "{}     Values :: ".format(padded_name)
+        out_str += "  Attack: {}  Money: {}".format(
+            attack, money)
+        
+        self.player_logger("")
+        self.player_logger(out_str)
+        self.player_logger("")
         pass
     def show_health(self):
         """Shows players' health"""
         # creates an attribute based on the class
         
-        self.logger.game("{} Health {}".format(self.name,self.health))
+        padded_name = self.name.ljust(self.parent.max_player_name_len)
+        out_str = "{}     Health : ".format(padded_name)
+        out_str += "{}".format(self.health)
+        self.player_logger(out_str)
+        
         pass
         
     def attack_player(self, other_player):

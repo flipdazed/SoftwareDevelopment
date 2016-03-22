@@ -3,6 +3,7 @@
 
 # This file contains the initial config data
 import sys
+import os
 import inspect
 
 from logs import *
@@ -59,11 +60,19 @@ class Gameplay(CommonGamePlayLoggers):
             Computer(self, hand_size, deck_settings, name, health)
         self.Central = lambda hand_size, deck_settings, name, supplements: \
             Central(self, hand_size, deck_settings, name, supplements)
-            
+        
+        self.art = Art() # create art for game
         # logging
         get_logger(self)
+        self.clear_term()
+        
         
         pass
+    def clear_term(self):
+        """clears terminal"""
+        os.system('clear')
+        pass
+    
     def configure(self, defaults):
         """configure the game settings
         Relies on the defaults settings being in an expected format
@@ -99,6 +108,12 @@ class Gameplay(CommonGamePlayLoggers):
             }
         """
         
+        # this is used to align all the text nicely
+        self.card_names = [card["params"]["name"] \
+            for _,val in defaults.iteritems() for card in val['deck_settings']]
+        self.max_card_name_len = max([len(name) for name in self.card_names])
+        self.max_player_name_len = max([len(val["name"]) \
+            for _ ,val in defaults.iteritems()])
         self.user = self.User(**defaults['user'])
         self.computer = self.Computer(**defaults['computer'])
         self.central = self.Central(**defaults['central'])
@@ -143,12 +158,7 @@ class Gameplay(CommonGamePlayLoggers):
                 player.turn()
                 logger.debug("End {} Turn.".format(player.name))
                 #### End User Turn ####
-        
-                # display active deck and supplements
-                self.central.display_all_active()
-        
-                # Display health state
-                self.display_health_status()
+                
         return self.continue_game
     def end(self):
         """Checks for end game conditions"""
@@ -190,7 +200,7 @@ class Gameplay(CommonGamePlayLoggers):
         if self.continue_game:
             
             # Starting the game
-            self.logger.game("Do you want an aggressive (A) opponent or an greedy (G) opponent")
+            self.logger.game("Do you want an aggressive (A) opponent or a greedy (G) opponent")
             iopponent_type = raw_input().upper()
             aggressive = (iopponent_type=='A')
             
@@ -203,8 +213,10 @@ class Gameplay(CommonGamePlayLoggers):
         default_msg = "Welcome to my wonderful game. I hope you are as excited as I am to play!"
         if not welcome_msg:
             welcome_msg = default_msg
+        self.logger.game(self.art.welcome)
         self.logger.game(welcome_msg)
         
+        self.logger.game(self.art.underline)
         self.logger.game("Do you want to play? 'Y' to continue, else exit")
         iplay_game = raw_input().upper()
         
@@ -238,8 +250,8 @@ class Gameplay(CommonGamePlayLoggers):
         self.computer.deck_to_hand()
         
         # Display self.central.central cards state
-        self.central.print_active_cards()
-        self.central.print_supplements()
+        self.central.display_all_active()
+        self.wait_for_user()
         pass
     def exit(self, exit_msg=""):
         """Friendly exit expects exit message as string"""
@@ -247,21 +259,40 @@ class Gameplay(CommonGamePlayLoggers):
         if not exit_msg:
             exit_msg = default_msg
         
+        self.clear_term()
+        self.logger.game(self.art.goodbye)
         self.logger.game("")
-        self.logger.game(exit_msg) 
+        self.logger.game(exit_msg)
+        self.logger.game("")
+        self.logger.game("")
         sys.exit() # Terminate
         pass
     def hostile_exit(self):
         """UnFriendly exit"""
-        self.logger.game("")
+        self.clear_term()
+        self.logger.game(self.art.goodbye)
         self.logger.game("")
         self.logger.game("Sad to see you leave so quickly. Please return soon! :)")
+        self.logger.game("")
+        self.logger.game("")
         sys.exit() # Terminate
         pass
     def display_health_status(self):
         """Displays the health of both players"""
         # Display health state
         self.logger.game("")
+        self.logger.game(self.art.make_title(" Health Bar ", center=False))
         self.user.show_health()
         self.computer.show_health()
+        self.logger.game(self.art.underline)
+        pass
+    def wait_for_user(self):
+        """Ask use to proceed"""
+        self.user.player_logger("")
+        self.user.player_logger(self.art.choose_action)
+        self.user.player_logger(self.art.continue_game)
+        self.user.player_logger(self.art.underline)
+        if raw_input().upper() == 'Q': 
+            self.logger.debug("User wants to quite the game")
+            self.hostile_exit()
         pass
