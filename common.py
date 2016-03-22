@@ -126,7 +126,8 @@ class CommonActions(object):
         # max card name length
         
         if len(cards) == 0:
-            self.logger.game("Looks like all the cards here have been used!")
+            self.logger.game(self.art.index_buffer+ \
+            "Nothing interesting to see here...")
         else:
             for i, card in enumerate(cards):
                 num_str = "[{}] ".format(i) if index else self.art.index_buffer

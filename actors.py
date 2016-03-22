@@ -174,11 +174,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             # display active deck and supplements
             self.parent.central.display_all_active()
             
-            # Display User hand
-            self.print_hand()
-            
-            # display user values
-            self.display_values()
+            self.__show_updated_user_state()
             
             # In-game actions UI
             self.player_logger("")
@@ -202,8 +198,6 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 else: # there are no cards in the user's hand
                     self.player_logger("There are no cards currently in your hand to play!")
                     self.logger.debug("There are cards ({}) in the Users hand".format(len(self.hand)))
-                
-                self.__show_updated_user_state()
                     
             elif iuser_action.isdigit():    # Play a specific card
                 
@@ -273,7 +267,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 break
             
             elif ibuy_input == 'Q':       # Quit Game
-                self.logger.debug("User wants to quite the game")
+                self.logger.debug("User wants to quit the game")
                 self.parent.hostile_exit()
             else:                           # cycle the shopping loop
                 self.logger.debug("No action matched to input (input: {}) ...".format(ibuy_input))
@@ -281,6 +275,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         
         self.player_logger("Unfortunately you have no remaining money")
         self.player_logger("You have been thrown out of the shop!")
+        self.parent.wait_for_user()
         pass
     def purchase_cards(self, ibuy_input):
         """User purchases cards"""
