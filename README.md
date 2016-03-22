@@ -1,4 +1,6 @@
 # SoftwareDevelopment
+The game is run from `cardgame.py`
+
 Deliberately bad code providing the basis for a module in Software Development
 
 ##Assessed Criteria: Improvement and Reflection
