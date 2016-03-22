@@ -107,17 +107,26 @@ class Central(CommonActions,__CentralLoggers):
             self.logger.debug('iteration #{}: Moving {} from deck to active'.format(i, card.name))
         pass
     
-    def print_supplements(self, logger=None):
+    def print_supplements(self, index=False, logger=None):
         """Display supplements"""
         title = self.art.make_title("Supplements")
-        supplement = self.art.index_buffer+ str(self.supplements[0])
+        supplement = str(self.supplements[0])
         
+        # make the title of the supplements
         if logger:
             logger(title)
         else:
             self.player_logger(title)
-        if len(self.supplements) > 0:
-            self.player_logger(supplement)
+        
+        # print the supplements
+        if len(self.supplements) == 0:
+            self.logger.game(self.art.index_buffer+ \
+            "Nothing interesting to see here...")
+        else:
+            num_str = "[S] " if index else self.art.index_buffer
+            self.logger.game(num_str + "{}".format(supplement))
+        
+        # prints the underline
         self.player_logger(self.art.underline)
         pass
     def display_all_active(self):
@@ -180,8 +189,8 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             
             # display active deck and supplements
             self.parent.central.display_all_active()
-            
-            self.__show_updated_user_state()
+            self.logger.game("")
+            self.show_updated_user_state()
             
             self.print_delayed_messages()
             
@@ -258,16 +267,19 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         while self.money > 0: # no warning of no self.money
             self.parent.clear_term() # clear the screen
             # welcome to the shop
-            self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
+            self.logger.game(self.art.shop)
             self.logger.game(self.art.underline)
-            self.logger.game("Cards bought here are added to your discard pile")
+            self.logger.game("Cards bought here are added to your discard pile.")
+            self.logger.game("You will have a random chance to pick them at each new turn.")
             self.logger.game("")
             
             self.logger.debug("Starting new purchase loop with money: {}".format(self.money))
             
             # Display central.central cards state
             self.parent.central.print_active_cards("Central Buyable Cards", index=True)
+            self.parent.central.print_supplements(index=True)
             self.logger.game("")
+            
             self.player_logger("Current money: {}".format(self.money))
             
             # display delayed messages
@@ -389,10 +401,10 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             self.logger.debug("No Supplements available")
             self.add_delayed_message("No Supplements Left!", self.logger.game, in_shop=True)
         pass
-    def __show_updated_user_state(self):
+    def show_updated_user_state(self):
         """Shows the updated / current user state"""
-        self.print_hand()           # Display User hand
         self.print_active_cards()   # Display User active cards
+        self.print_hand()           # Display User hand
         self.display_values()       # Display PC state
         pass
     
@@ -436,7 +448,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         if self.money == 0:
             self.parent.clear_term() # clear the screen
             # welcome to the shop
-            self.logger.game(self.art.make_title(" Welcome to the Shop ", center=True))
+            self.logger.game(self.art.shop)
             self.logger.game(self.art.underline)
             self.logger.game("Cards bought here are added to your discard pile")
             self.logger.game("")

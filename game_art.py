@@ -1,4 +1,6 @@
 # start of a UI art class
+import subprocess
+
 class Art(object):
     def __init__(self):
         """Define some artistic constants"""
@@ -22,15 +24,34 @@ class Art(object):
         self.choose_action = self.make_title("Choose_Action").replace("_"," ")
         self.welcome2 = \
         """
-                                                __                        
-        - - /, /,   ,- _~, _-_-      ,- _~.   ,-||-,     /\\,/\\,   ,- _~,
-          )/ )/ )  (' /| /  /,      (' /|    ('|||  )   /| || ||   (' /| /
-          )__)__) ((  ||/=  ||     ((  ||   (( |||--))  || || ||  ((  ||/=
-         ~)__)__) ((  ||   ~||     ((  ||   (( |||--))  ||=|= ||  ((  ||  
-          )  )  )  ( / |    ||      ( / |    ( / |  )  ~|| || ||   ( / |  
-         /-_/-_/    -____- (  -__,   -____-   -____-    |, \\,\\,   -____-
-                                                       _-                 
-                                                                          
+                                                __                          
+        - - /, /,   ,- _~, _-_-      ,- _~.   ,-||-,     /\\,/\\,   ,- _~,  
+          )/ )/ )  (' /| /  /,      (' /|    ('|||  )   /| || ||   (' /| /  
+          )__)__) ((  ||/=  ||     ((  ||   (( |||--))  || || ||  ((  ||/=  
+         ~)__)__) ((  ||   ~||     ((  ||   (( |||--))  ||=|= ||  ((  ||    
+          )  )  )  ( / |    ||      ( / |    ( / |  )  ~|| || ||   ( / |    
+         /-_/-_/    -____- (  -__,   -____-   -____-    |, \\,\\,   -____-  
+                                                       _-                   
+                                                                            
+        """
+        self.shop=\
+        """
+                                  (    )                                    
+                                    )  )                                    
+                                   (  (                  /\                 
+                                    (_)                 /  \  /\            
+                            ________[_]________      /\/    \/  \           
+                   /\      /\        ______    \    /   /\/\  /\/\          
+                  /  \    //_\       \    /\    \  /\/\/    \/    \         
+           /\    / /\/\  //___\       \__/  \    \/                         
+          /  \  /\/    \//_____\       \ |[]|     \                         
+         /\/\/\/       //_______\       \|__|      \        Welcome         
+        /      \      /XXXXXXXXXX\                  \          to the       
+                \    /_I_II  I__I_\__________________\            Shop      
+                       I_I|  I__I_____[]_|_[]_____I                         
+                       I_II  I__I_____[]_|_[]_____I                         
+                       I II__I  I     XXXXXXX     I                         
+                    ~~~~~"   "~~~~~~~~~~~~~~~~~~~~~~~~                      
         """
         
         self.welcome = \
@@ -75,8 +96,19 @@ class Art(object):
         ======= |===|===| ===============================================   
                                                                             
         """
+        self.goodbye_mini = \
+            """                         
+                  /| ________________   
+            O|===|* >________________>  
+                  \|                    
+            """
         pass
-        
+    def check_terminal_width(self):
+        """Checks the terminal can fit the game"""
+        rows, columns = subprocess.check_output(['stty', 'size']).split()
+        check = (int(columns) >= 78 and rows >= 90)
+        return check
+    
     def make_title(self, title, center=False):
         """makes a pretty title"""
         if center:

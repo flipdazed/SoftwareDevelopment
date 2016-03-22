@@ -211,6 +211,14 @@ class Gameplay(CommonGamePlayLoggers):
         """starts the new game sequence
         expects welcome message as string"""
         default_msg = "Welcome to my wonderful game. I hope you are as excited as I am to play!"
+        
+        if not self.art.check_terminal_width():
+            self.logger.game("For best results resize the terminal window to:")
+            self.logger.game(" >= 78 columns and >= 90 rows")
+            self.logger.game("Press any key to continue or 'Q' to quit.")
+            if raw_input().upper() == 'Q':
+                self.hostile_exit(safemode=True)
+        
         if not welcome_msg:
             welcome_msg = default_msg
         self.logger.game(self.art.welcome)
@@ -267,13 +275,19 @@ class Gameplay(CommonGamePlayLoggers):
         self.logger.game("")
         sys.exit() # Terminate
         pass
-    def hostile_exit(self):
+    def hostile_exit(self, safemode=False):
         """UnFriendly exit"""
+        
+        if safemode: # we don't know the size of temrinal
+            goodbye = self.art.goodbye_mini
+        else:
+            goodbye = self.art.goodbye
+        
         self.clear_term()
-        self.logger.game(self.art.goodbye)
+        self.logger.game(goodbye)
         self.logger.game("")
-        self.logger.game("Sad to see you leave so quickly. Please return soon! :)")
-        self.logger.game("")
+        self.logger.game("Sad to see you leave so quickly...")
+        self.logger.game("Please return soon! :)")
         self.logger.game("")
         sys.exit() # Terminate
         pass
