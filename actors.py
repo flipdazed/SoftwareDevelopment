@@ -102,6 +102,11 @@ class Central(CommonActions,__CentralLoggers):
     def deck_to_active(self):
         """ moves cards from one item to another"""
         for i in xrange(0, self.hand_size):
+            
+            if len(self.deck) == 0:
+                self.logger.debug("Deck length is also zero!")
+                self.logger.debug("Exiting the deck_to_active routine as no more cards.")
+                return
             card = self.deck.pop()
             self.active.append(card)
             self.logger.debug('iteration #{}: Moving {} from deck to active'.format(i, card.name))
@@ -109,8 +114,8 @@ class Central(CommonActions,__CentralLoggers):
     
     def print_supplements(self, index=False, logger=None):
         """Display supplements"""
-        title = self.art.make_title("Supplements")
-        supplement = str(self.supplements[0])
+        title = "Supplements (remaining: {})".format(len(self.supplements))
+        title = self.art.make_title(title)
         
         # make the title of the supplements
         if logger:
@@ -120,9 +125,13 @@ class Central(CommonActions,__CentralLoggers):
         
         # print the supplements
         if len(self.supplements) == 0:
+            self.logger.debug("There are no supplements!")
             self.logger.game(self.art.index_buffer+ \
             "Nothing interesting to see here...")
         else:
+            self.logger.debug(\
+            "There are {} supplements remaining".format(len(self.supplements)))
+            supplement = str(self.supplements[0])
             num_str = "[S] " if index else self.art.index_buffer
             self.logger.game(num_str + "{}".format(supplement))
         
@@ -180,7 +189,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
         self.add_delayed_message("Both Attack and Money will return to 0 at the end of your turn.", self.logger.game)
         
         # User's Turn
-        while not self.parent.end():
+        while not self.parent.end(display=False):
             
             self.parent.clear_term()
             
@@ -237,8 +246,32 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
                 
             elif iuser_action == 'A':       # Attack
                 self.logger.debug("Attack action selected (input: {}) ...".format(iuser_action))
+                
+                # output to screen from the attack
+                # get the name spacing correct
+                name_pad = self.parent.max_player_name_len
+                self.add_delayed_message(\
+                "{}     Attacking!".format(self.name.ljust(name_pad)))
+                
+                if self.attack != 0:
+                    self.add_delayed_message(\
+                    "{}     Suffered a battering of -{} Health".format(
+                            self.parent.computer.name.ljust(name_pad),self.attack),
+                            self.parent.computer.player_logger)
+                    
+                else:
+                    self.add_delayed_message(\
+                    "{}     Suffered -{} Health, whilst you make a rude gesture.".format(self.parent.computer.name.ljust(name_pad), self.attack),
+                    self.parent.computer.player_logger)
+                    
+                    self.add_delayed_message("", self.logger.game)
+                    self.add_delayed_message(\
+                    "Hint: Playing cards generates attack and money.", self.logger.game)
+                    self.add_delayed_message(\
+                    "      Visit the shop to increase deck strength.", self.logger.game)
+                # the actual attack :)
                 self.attack_player(self.parent.computer)
-            
+                
             elif iuser_action == 'E':       # Ends turn
                 self.logger.debug("End Turn action selected (input: {}) ...".format(iuser_action))
                 break
@@ -434,7 +467,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             iterator = self.delayed_messages
         
         while iterator:
-            item = iterator.pop()
+            item = iterator.pop(0)
             msg = item["msg"]
             logger = item["logger"]
             logger(msg) # use logger from dict to output message
@@ -452,7 +485,7 @@ class User(CommonActions, CommonUserActions, ___UserLoggers):
             self.logger.game("")
         
             self.print_delayed_messages(in_shop=True)
-            self.logger.game("Unfortunately you have no remaining money...")
+            self.logger.game("Unfortunately, you have no remaining money...")
             self.logger.game("You are being kicked out of the shop.")
             self.parent.wait_for_user()
         else: # else user has a nice quick exit
@@ -588,9 +621,7 @@ class Computer(CommonActions, CommonUserActions, ___UserLoggers):
         
         Expected format of source = integer or 'S'"""
         # This is a card from the active deck
-        if source in xrange(0,self.parent.central.hand_size):
-            purchase_card = self.parent.central.active[int(source)]
-            
+        for source,purchase_card in enumerate(self.parent.central.active):
             self.logger.debug("Index: {} found in Central Hand ({}, cost:{})".format(
                 source, purchase_card.name, purchase_card.cost))
             
@@ -600,7 +631,7 @@ class Computer(CommonActions, CommonUserActions, ___UserLoggers):
                 self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
                 
                 # Add card to PC discard pile
-                card = self.parent.central.active.pop(int(source))
+                card = self.parent.central.active.pop(source)
                 self.discard.append(card)
                 
                 self.logger.game("Card bought... {}".format(card))
@@ -623,29 +654,40 @@ class Computer(CommonActions, CommonUserActions, ___UserLoggers):
                     self.logger.debug("No cards in central deck to refill central active deck.")
                     self.logger.debug("central hand_size:{}-1".format(self.parent.central.hand_size))
                     self.parent.central.hand_size -= 1
-                    
             else:
-                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
-                self.logger.critical("Error Occurred")
-        
+                # This is kept here to avoid future errors that may be introduced
+                # This is already verified as never being initiated earlier in the code
+                # see can_afford_cards assignment
+                self.logger.debug("Developer Error: There are no supplements to buy! {}")
+                self.logger.debug("Money: {}".format(self.money))
+                return
+                
         else: # This is a supplement as it is not in the range [0,5]
             # If PC has money to purchase:
             # comparison has alrady been made
-            purchase_card = self.parent.central.supplements[0]
-            
-            if self.money >= purchase_card.cost:
-                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
+            if len(self.parent.central.supplements) > 0:
+                purchase_card = self.parent.central.supplements[0]
                 
-                card = self.parent.central.supplements.pop()
-                self.discard.append(card)
-                self.player_logger("Supplement Bought {}".format(card))
-                
-                new_money = - card.cost
-                self.logger_buy_card(card, self.money, new_money)
-                self.money += new_money
+                if self.money >= purchase_card.cost:
+                    self.logger_affords_card(1, purchase_card.name, purchase_card.cost, wishlist=False)
+                    card = self.parent.central.supplements.pop()
+                    self.discard.append(card)
+                    self.player_logger("Supplement Bought {}".format(card))
+                    
+                    new_money = - card.cost
+                    self.logger_buy_card(card, self.money, new_money)
+                    self.money += new_money
+                else:
+                    self.logger.debug("Not enough money to buy {}".format(purchase_card))
+                    self.logger.debug("Money: {}".format(self.money))
+                    return
             else:
-                self.logger_affords_card(1, purchase_card.name, purchase_card.cost, can_afford=False)
-                self.logger.critical("Error Occurred")
+                # This is kept here to avoid future errors that may be introduced
+                # This is already verified as never being initiated earlier in the code
+                # see can_afford_cards assignment
+                self.logger.debug("Developer Error: There are no supplements to buy! {}")
+                self.logger.debug("Money: {}".format(self.money))
+                return
         pass
     def get_wish_list(self):
         """Gets the list of cards that the computer wishes to try and buy"""
@@ -785,11 +827,8 @@ class Computer(CommonActions, CommonUserActions, ___UserLoggers):
         expects that self.wish_list exists as a list
         """
         # Select cards where cost of card_i < money
-        for self.potential_card_index in xrange(0, self.parent.central.hand_size):  # Loop all cards
-        
+        for self.potential_card_index, card in enumerate(self.parent.central.active):  # Loop all cards
             self.logger_new_desired() # Log the action
-            card = self.parent.central.active[self.potential_card_index]
-        
             if card.cost <= self.money:   # if PC has enough money
                 # Add to temporary purchases
                 self.wish_list.append((self.potential_card_index, card))

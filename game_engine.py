@@ -111,6 +111,12 @@ class Gameplay(CommonGamePlayLoggers):
         # this is used to align all the text nicely
         self.card_names = [card["params"]["name"] \
             for _,val in defaults.iteritems() for card in val['deck_settings']]
+        
+        # exit if no cards
+        if not self.card_names:
+            error_msg = "Unfortunately no cards could be found in config.py!"
+            self.hostile_exit(msg=error_msg)
+        
         self.max_card_name_len = max([len(name) for name in self.card_names])
         self.max_player_name_len = max([len(val["name"]) \
             for _ ,val in defaults.iteritems()])
@@ -160,34 +166,42 @@ class Gameplay(CommonGamePlayLoggers):
                 #### End User Turn ####
                 
         return self.continue_game
-    def end(self):
-        """Checks for end game conditions"""
+    def end(self, display=True):
+        """Checks for end game conditions
+        The flag "display" lets the end()
+        be purely used as a function with no
+        in game output
+        """
         end_game = False
         
         # end_game = False flags the end of a game
         if self.user.health <= 0:   # User has died
-            self.logger_win_by_death(winner=self.computer, loser=self.user)
+            if display: self.logger_win_by_death(
+                winner=self.computer, loser=self.user)
             end_game = True
             
         elif self.computer.health <= 0: # PC has died
-            self.logger_win_by_death(winner=self.user, loser=self.computer)
+            if display: self.logger_win_by_death(
+                winner=self.user, loser=self.computer)
             end_game = True
             
         elif self.central.hand_size == 0: # Game ends if size of active deck is zero
-            self.logger_out_of_cards()
+            if display: self.logger_out_of_cards()
             if self.user.health > self.computer.health:
-                self.logger_win_on_health(winner=self.user, loser=self.computer)
+                if display: self.logger_win_on_health(
+                    winner=self.user, loser=self.computer)
             
             elif self.computer.health > self.user.health:
-                self.logger_win_on_health(winner=self.computer, loser=self.user)
+                if display: self.logger_win_on_health(
+                    winner=self.computer, loser=self.user)
             
             else: # No clear winner
-                self.logger_win_on_health(winner=self.computer,
+                if display: self.logger_win_on_health(winner=self.computer,
                     loser=self.user, equal=True)
             # don't end game if none of the above is true
             end_game = False
         else:
-            self.logger_continue_game()
+            if display: self.logger_continue_game()
         return end_game
     def replay(self):
         """Asks User if they want to replay"""
@@ -232,7 +246,7 @@ class Gameplay(CommonGamePlayLoggers):
         if not continue_game: 
             self.exit()
         
-        self.logger.game("Do you want an Aggressive (A) opponent or an Greedy (G) opponent")
+        self.logger.game("Do you want an aggressive (A) opponent or a greedy (G) opponent")
         iopponent_type = raw_input().upper()
         
         self.computer.aggressive = (iopponent_type=='A') # store opponent type
@@ -275,7 +289,7 @@ class Gameplay(CommonGamePlayLoggers):
         self.logger.game("")
         sys.exit() # Terminate
         pass
-    def hostile_exit(self, safemode=False):
+    def hostile_exit(self, msg=None,safemode=False):
         """UnFriendly exit"""
         
         if safemode: # we don't know the size of temrinal
@@ -283,10 +297,12 @@ class Gameplay(CommonGamePlayLoggers):
         else:
             goodbye = self.art.goodbye
         
+        if msg is None: msg = "Sad to see you leave so quickly..."
+        
         self.clear_term()
         self.logger.game(goodbye)
         self.logger.game("")
-        self.logger.game("Sad to see you leave so quickly...")
+        self.logger.game(msg)
         self.logger.game("Please return soon! :)")
         self.logger.game("")
         sys.exit() # Terminate

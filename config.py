@@ -22,11 +22,12 @@ defaults = {
             {"count":2 ,"params":{"name":'Caravan', "attack":1, "money":5, "cost":5}},
             {"count":2 ,"params":{"name":'Assassin', "attack":5, "money":0, "cost":4}}
             ]
-        ,"supplements": 
-            [{"count":10 ,"params":{"name":'Levy', "attack":1, "money":2, "cost":2}}]
+        ,"supplements":[
+            {"count":10 ,"params":{"name":'Levy', "attack":1, "money":2, "cost":2}}
+            ]
         }
     ,"user":{
-        "name":'Blobasaurus Rex',  #"Player One",
+        "name":'You',  #"Player One",
         "health":30,
         "hand_size":5,
         "deck_settings":[ # User's deck

@@ -5,7 +5,7 @@ class Art(object):
     def __init__(self):
         """Define some artistic constants"""
         ## Artistic structures
-        self.title_len = 70
+        self.title_len = 72
         self.flare = "~"
         self.flare2 = ":"
         self.title_start = 10*self.flare

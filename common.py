@@ -63,8 +63,12 @@ class CommonActions(object):
             # Shuffle deck computer.pC['hand_size times
             # if length of deck = 0
             # Will only be done once
-            if (len(self.deck) == 0):
+            if len(self.deck) == 0:
                 self.logger.debug("Deck length is zero!")
+                if len(self.discard) == 0:
+                    self.logger.debug("Discard length is also zero!")
+                    self.logger.debug("Exiting the deck_to_hand routine as no more cards.")
+                    return
                 random.shuffle(self.discard)   # Shuffle discard pile
                 self.logger.debug("shuffled deck")
                 self.deck = self.discard  # Make deck the discard
