@@ -52,8 +52,16 @@ class CommonGamePlayLoggers(object):
 @wrap_all(log_me)
 class Gameplay(CommonGamePlayLoggers):
     """Gameplay Class"""
-    def __init__(self):
+    def __init__(self, defaults=None):
+        """Can take the configure defaults
+        argument in directly and pass to configure
+        if done this way it will create an instance.
         
+        Using the function assumes we just want the params
+        and don't want to store
+        """
+        
+        # setting up the child classes
         self.User = lambda hand_size, deck_settings, name, health: \
             User(self, hand_size, deck_settings, name, health)
         self.Computer = lambda hand_size, deck_settings, name, health: \
@@ -62,10 +70,16 @@ class Gameplay(CommonGamePlayLoggers):
             Central(self, hand_size, deck_settings, name, supplements)
         
         self.art = Art() # create art for game
+        
         # logging
         get_logger(self)
+        
         self.clear_term()
         
+        if defaults is not None:
+            self.logger.debug("Auto configuring with argument provided...")
+            self.configure(defaults)
+            self.defaults = defaults
         
         pass
     def clear_term(self):
@@ -271,9 +285,6 @@ class Gameplay(CommonGamePlayLoggers):
         # Move cards from PC deck to PC's hand
         self.computer.deck_to_hand()
         
-        # Display self.central.central cards state
-        self.central.display_all_active()
-        self.wait_for_user()
         pass
     def exit(self, exit_msg=""):
         """Friendly exit expects exit message as string"""

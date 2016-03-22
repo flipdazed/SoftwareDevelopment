@@ -38,7 +38,7 @@ def get_logger(self):
 
 # initiates logging with default level being #GAME
 # this is overwritten in the main game file
-logging.root.setLevel(logging.DEBUG)
+logging.root.setLevel(logging.INFO)
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

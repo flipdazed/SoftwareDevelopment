@@ -8,7 +8,7 @@ import game_engine
 from config import defaults
 
 ###### Options #######
-level = logging.DEBUG
+level = logging.GAME
 # logging.DEBUG
 # logging.INFO
 # logging.GAME

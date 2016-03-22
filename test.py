@@ -47,7 +47,7 @@ class ParentChild(__CommonTest__):
         # # creates a logger for the test file
         get_logger(self)
         
-        self.game = game_engine.Gameplay()
+        self.game = game_engine.Gameplay(config.defaults)
         
         self.game.user = self.game.User(**config.defaults['user'])
         self.game.computer = self.game.Computer(**config.defaults['computer'])
@@ -132,7 +132,7 @@ class Settings(__CommonTest__):
         get_logger(self)
         
         # create classes of users and central deck
-        self.game = game_engine.Gameplay()
+        self.game = game_engine.Gameplay(config.defaults)
         self.central = self.game.Central(**config.defaults['central'])
         self.user = self.game.User(**config.defaults['user'])
         self.computer = self.game.Computer(**config.defaults['computer'])
@@ -456,7 +456,7 @@ class Gameplay(__CommonTest__):
         
         # # creates a logger for the test file
         get_logger(self)
-        self.game = game_engine.Gameplay()
+        self.game = game_engine.Gameplay(config.defaults)
         # create classes of users and central deck
         self.central = self.game.Central(**config.defaults['central'])
         self.user = self.game.User(**config.defaults['user'])
@@ -525,7 +525,6 @@ class Formatting(__CommonTest__):
         return error
 
 if __name__ == '__main__':
-    logging.root.setLevel(logging.DEBUG)
     settings = Settings()
     test = Gameplay()
     children = ParentChild()
