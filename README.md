@@ -30,7 +30,7 @@ Other folders in this directory:
 
 
 # Code Relationships / Code Structure
-!["File Relationships"](../docs/modifiedcode/relationships.png?raw=True "File Relationships")
+!["File Relationships"](../docs/modifiedcode/relationships.png "File Relationships")
 
 # Game Overview 
 To introduce the game, and for simplicity, we will assume certain settings and will denote in *italics* that a parameter can be adjusted by the file `config.py`.
