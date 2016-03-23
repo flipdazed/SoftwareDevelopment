@@ -1,7 +1,35 @@
-# SoftwareDevelopment
-The game is run from `cardgame.py`
-
+# Software Development
 Deliberately bad code providing the basis for a module in Software Development
+
+#Repository Contents
+The game is run from:
+
+- `cardgame.py` : the debug output level can be adjusted in this file
+
+The settings are configured in:
+
+- `config.py` : containing a dictionary of game parameters
+
+Other relevant files for the running of the game:
+
+- `test.py` : unit tests for the base classes and settings
+- `game_engine.py` : contains the `game()` class that instantiates players from `actors.py`
+- `actors.py` : The classes for the players and central deck
+- `common.py` : Common routines inherited by the player and deck classes
+- `logs.py` : Logging routines
+- `game_art.py` : Game art including an alternative welcome message
+- `logging_colorer.py` : Colouring parameters for the logger
+- `logging_formatter.py` : Formatting for the logger
+
+Other folders in this directory:
+
+- docs/modifiedcode : Modified code flow diagrams and dependencies
+- docs/originalcode : Original code flow diagrams
+- docs/usertests : User feedback summary and response sheets
+
+
+#Code Relationships / Code Structure
+!["File Relationships"](https://github.com/flipdazed/SoftwareDevelopment/blob/master/docs/modifiedcode/relationships.png "File Relationships")
 
 ##Assessed Criteria: Improvement and Reflection
 The main part of this submission should be a new version of the code, implementing the changes you proposed in Planning and Risks. Your submission should include any required files such as build and/or test files. The submitted code must be runnable and be able to be used to play games. 
