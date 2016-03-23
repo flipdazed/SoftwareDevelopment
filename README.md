@@ -29,7 +29,7 @@ Other folders in this directory:
 - `docs/usertests/` : User feedback summary and response sheets
 
 
-# Code Relationships / Code Structure
+# Improved Code Structure
 !["File Relationships"](docs/modifiedcode/relationships.png?raw=True "File Relationships")
 
 # Game Overview 
