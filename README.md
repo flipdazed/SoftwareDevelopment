@@ -60,8 +60,8 @@ The settings available to configure for gameplay are:
  - The number of Cards that constitute a Player Hand for each Player
  - The starting Health for each Player
  - The Name of each Player
- 
- These can be configured in the file `config.py`.
+
+These can be configured in the file `config.py`.
 
 #### Cards
 Each **Card** has the properties which will be used in the following discussion:
@@ -97,7 +97,7 @@ An Actor then has several options in each turn presented by the **Actor UI**:
  - Attack
  - End Turn
  - Quit Game (this is only relevant for The Player)
- 
+
 Turns are managed by `Turn()` which is similarly named function in both the `User()` and `Computer()` classes in the file `actors.py`.
 
 ### Playing Cards
