@@ -36,15 +36,15 @@ Other folders in this directory:
 To introduce the game, and for simplicity, we will assume certain settings and will denote in *italics* that a parameter can be adjusted by the file `config.py`.
 
 ## Setting up the game
-The game is played by two **Players**: the real-life user, **The Player**, competing against the computer, **The AI**.
-Each Player is assigned a **Player Deck** that is individual to each player consisting of *10* Cards, *2 Squires and 8 Serfs*.
-Each Player is assigned a **Discard Pile (Discard Deck)**, which starts empty.
-Each Player is assigned an **Active Hand**, which starts empty.
-Each Player is assigned a **Player Hand**, which starts empty.
-A **Central Deck** of *36* Cards is also created that consists of *a variety* of different Cards.
-A **Central Active Deck** will begin empty.
-Players are both assigned *30* **Health** at the beginning of a **Game** instance.
-A **Supplement** is identical to a normal Card in this game and has no special functionality at this stage. However, they are treated as separate entities in the code and UI to allow for future development. They are played and bought as normal Cards.
+ - The game is played by two **Players**: the real-life user, **The Player**, competing against the computer, **The AI**.
+ - Each Player is assigned a **Player Deck** that is individual to each player consisting of *10* Cards, *2 Squires and 8 Serfs*.
+ - Each Player is assigned a **Discard Pile (Discard Deck)**, which starts empty.
+ - Each Player is assigned an **Active Hand**, which starts empty.
+ - Each Player is assigned a **Player Hand**, which starts empty.
+ - A **Central Deck** of *36* Cards is also created that consists of *a variety* of different Cards.
+ - A **Central Active Deck** will begin empty.
+ - Players are both assigned *30* **Health** at the beginning of a **Game** instance.
+ - A **Supplement** is identical to a normal Card in this game and has no special functionality at this stage. However, they are treated as separate entities in the code and UI to allow for future development. They are played and bought as normal Cards.
 
 The game is set up through the function `new()` within the class `Game()` in `game_engine.py`.
 Players are managed by the `User()` and `Computer()` classes found in `Actors.py`.
@@ -70,8 +70,8 @@ Each **Card** has the properties which will be used in the following discussion:
  - **Cost**
  - **Attack**
  - **Money**
- 
- This is managed by the class `Card()` found in `common.py`.
+
+This is managed by the class `Card()` found in `common.py`.
  
 ## Game Instances
 A **Game** consists of **Rounds**, described later, which continue until either player has below 1 health or there are no remaining Cards in the Central Deck. A Game instance will begin with the Central Active Deck being filled with *5* Cards at random, selected from the Central Deck. If there are less than *5* Cards remaining in the Central Deck, all remaining Cards in the Central Deck (i.e. a number less than *5*) will be moved to the Central Active Deck. The first **Round** will then be started.
@@ -98,7 +98,7 @@ An Actor then has several options in each turn presented by the **Actor UI**:
  - End Turn
  - Quit Game (this is only relevant for The Player)
  
- Turns are managed by `Turn()` which is similarly named function in both the `User()` and `Computer()` classes in the file `actors.py`.
+Turns are managed by `Turn()` which is similarly named function in both the `User()` and `Computer()` classes in the file `actors.py`.
 
 ### Playing Cards
 The Actor may only **Play** Cards from their Player Hand. When an Actor **Plays** a Card, the **Attack** and **Money** values are added to the current respective totals. The Card is moved from the Player hand to the Active Hand and the Actor is then presented with the **Actor UI** again. Playing All Cards is the same as playing each *5* Cards one at a time.
