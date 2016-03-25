@@ -13,7 +13,7 @@ GREEN   = 24
 PINK    = 25
 RED     = 26
 PLAIN   = 27
-# USER IN COLOR_CONFIG
+# USED IN COLOR_CONFIG
 
 # This will change the prefix in the in-game messages
 GAME_MSG_FORMAT = "GAME: %(msg)s"
