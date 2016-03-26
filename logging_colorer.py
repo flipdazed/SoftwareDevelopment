@@ -100,7 +100,7 @@ def add_coloring_to_emit_ansi(fn):
             color = red
         elif(levelno>=30):
             color = yellow
-        
+        # These are the logging levels used in the game output
         elif(levelno>=27):
             color = plain
         elif(levelno>=26):
@@ -115,7 +115,7 @@ def add_coloring_to_emit_ansi(fn):
             color = cyan
         elif(levelno>=21):
             color = white
-        
+        #The end of the logging levels used in the game output
         elif(levelno>=20):
             color = green
         elif(levelno>=10):
