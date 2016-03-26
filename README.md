@@ -5,16 +5,16 @@ The module, "Software Development", consists of deliberately badly written code 
 
 The game is run from:
 
-- `cardgame.py` : the debug output level can be adjusted in this file
+- `cardgame.py` : The debug output level can be adjusted in this file
 
 The settings are configured in:
 
-- `config.py` : containing a dictionary of game parameters
+- `config.py` : Containing a dictionary of game parameters
 
 Other relevant files for the running of the game:
 
-- `test.py` : unit tests for the base classes and settings
-- `game_engine.py` : contains the `game()` class that instantiates players from `actors.py`
+- `test.py` : Unit tests for the base classes and settings
+- `game_engine.py` : Contains the `game()` class that instantiates players from `actors.py`
 - `actors.py` : The classes for the players and central deck
 - `common.py` : Common routines inherited by the player and deck classes
 - `logs.py` : Logging routines
